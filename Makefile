@@ -12,7 +12,7 @@ install:
 	pip install -e .[helpers,examples]
 
 test: install
-	python -m unittest discover -s test
+	python -m unittest discover -vs test
 
 examples: install
 	jupyter-notebook
