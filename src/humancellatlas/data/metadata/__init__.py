@@ -582,16 +582,18 @@ class Bundle:
         return [s for s in self.biomaterials.values() if isinstance(s, SpecimenFromOrganism)]
 
     @property
-    def sequencing_input(self) -> List[CellSuspension]:
+    def sequencing_input(self) -> List[Biomaterial]:
         return [bm for bm in self.biomaterials.values()
-                if isinstance(bm, CellSuspension)
-                and any(ps.is_sequencing_process() for ps in bm.to_processes.values())]
+                if any(isinstance(f, SequenceFile)
+                       for ps in bm.to_processes.values()
+                       for f in ps.output_files.values())]
 
     @property
     def sequencing_output(self) -> List[SequenceFile]:
         return [f for f in self.files.values()
                 if isinstance(f, SequenceFile)
-                and any(ps.is_sequencing_process() for ps in f.from_processes.values())]
+                and any(ps.is_sequencing_process()
+                        for ps in f.from_processes.values())]
 
 
 entity_types = {
