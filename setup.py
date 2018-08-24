@@ -15,6 +15,10 @@ setup(
         ],
         "examples": [
             'jupyter >= 1.0.0'
+        ],
+        "coverage": [
+            'coverage',
+            'coveralls'
         ]
     },
     package_dir={'': 'src'},
