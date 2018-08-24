@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/HumanCellAtlas/metadata-api.svg?branch=develop)](https://travis-ci.org/HumanCellAtlas/metadata-api)
+[![Coverage Status](https://coveralls.io/repos/github/HumanCellAtlas/metadata-api/badge.svg?branch=develop)](https://coveralls.io/github/HumanCellAtlas/metadata-api?branch=develop)
+
 ## The HumanCellAtlas metadata API
 
 A light-weight wrapper library around the JSON metadata in HCA data bundles.

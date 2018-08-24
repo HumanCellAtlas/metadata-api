@@ -9,10 +9,13 @@ $(error Looks like Python 3.6 is not installed or active in the current virtuale
 endif
 
 install:
-	pip install -e .[helpers,examples]
+	pip install -e .[dss,examples,coverage]
+
+travis_install:
+	pip install -e .[dss,coverage]
 
 test: install
-	python -m unittest discover -vs test
+	coverage run -m unittest discover -vs test
 
 examples: install
 	jupyter-notebook

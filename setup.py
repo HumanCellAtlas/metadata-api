@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="hca-metadata-api",
-    version="1.0b1",
+    version="1.0b2",
     license='MIT',
     install_requires=[
         'dataclasses >= 0.6'
@@ -15,6 +15,10 @@ setup(
         ],
         "examples": [
             'jupyter >= 1.0.0'
+        ],
+        "coverage": [
+            'coverage',
+            'coveralls'
         ]
     },
     package_dir={'': 'src'},
