@@ -16,7 +16,7 @@ setup(
         "examples": [
             'jupyter >= 1.0.0'
         ],
-        "travis": [
+        "coverage": [
             'coverage',
             'coveralls'
         ]
