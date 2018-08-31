@@ -109,15 +109,19 @@ class LinkError(RuntimeError):
 
 @dataclass(init=False)
 class Project(Entity):
+    project_title: Optional[str]
     project_short_name: Optional[str]
     laboratory_names: Set[str]
+    contributors: Set[str]
 
     def __init__(self, json: JSON) -> None:
         super().__init__(json)
         content = json.get('content', json)
         core = content['project_core']
+        self.project_title = core.get('project_title')
         self.project_short_name = lookup(core, 'project_short_name', 'project_shortname')
         self.laboratory_names = {c.get('laboratory') for c in content['contributors']} - {None}
+        self.contributors = {c.get('institution') for c in content['contributors']} - {None}
 
     @property
     def project_shortname(self):
