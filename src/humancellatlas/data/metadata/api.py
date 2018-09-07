@@ -120,8 +120,20 @@ class Project(Entity):
         core = content['project_core']
         self.project_title = core.get('project_title')
         self.project_short_name = lookup(core, 'project_short_name', 'project_shortname')
+        self.project_description = core.get('project_description')
         self.laboratory_names = {c.get('laboratory') for c in content['contributors']} - {None}
-        self.contributors = {c.get('institution') for c in content['contributors']} - {None}
+        # TODO: Rename to contributors when property function is removed
+        self.project_contributors = {c.get('contact_name') for c in content['contributors']} - {None}
+        self.institutions = {c.get('institution') for c in content['contributors']} - {None}
+        self.project_contacts = {(c.get('contact_name'), c.get('institution'), c.get('email'))
+                                 for c in content['contributors']}
+        self.publications = content.get('publications', [])
+
+    @property
+    def contributors(self):
+        # contributors is replaced by institutions
+        # TODO: Remove before merging; this is only for backwards compat while working on indexer
+        return self.institutions
 
     @property
     def project_shortname(self):
