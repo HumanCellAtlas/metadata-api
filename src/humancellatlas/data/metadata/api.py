@@ -155,7 +155,7 @@ class ProjectContact(object):
         self.phone = json.get('phone')
         self.institution = json.get('institution')
         self.laboratory = json.get('laboratory')
-        self.corresponding_contributor = json.get('corresponding_contributor')
+        self.corresponding_contributor = json.get('corresponding_contributor', False)
         self.orcid_id = json.get('orcid_id')  # The individual's ORCID ID linked to previous work.
 
     def __hash__(self):
@@ -165,6 +165,7 @@ class ProjectContact(object):
         return hash(self) == hash(other)
 
 
+shown_data = False
 @dataclass(init=False)
 class Project(Entity):
     """
