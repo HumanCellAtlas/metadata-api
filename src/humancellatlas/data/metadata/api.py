@@ -128,13 +128,12 @@ class ProjectPublication(object):
         self.publication_url = json.get('publication_url')
 
     def __hash__(self):
-        return hash(self.publication_url)
+        return hash('::'.join(['/'.join(self.authors), self.publication_url,
+                               self.doi or 'undefined_doi', str(self.pmid or 'undefined_pmid'),
+                               self.publication_title]))
 
-    def __eq__(self, other):
-        return hash(self) == hash(other)
 
-
-@dataclass(init=False)
+@dataclass(init=False, unsafe_hash=True)
 class ProjectContact(object):
     """
     Project Contact
@@ -157,12 +156,6 @@ class ProjectContact(object):
         self.laboratory = json.get('laboratory')
         self.corresponding_contributor = json.get('corresponding_contributor', False)
         self.orcid_id = json.get('orcid_id')  # The individual's ORCID ID linked to previous work.
-
-    def __hash__(self):
-        return hash(self.email)
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
 
 
 @dataclass(init=False)
