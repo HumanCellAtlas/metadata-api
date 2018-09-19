@@ -11,6 +11,8 @@ setup(
     extras_require={
         "dss": [
             'hca == 4.1.4',
+            # Work around https://github.com/HumanCellAtlas/metadata-api/issues/22
+            'commonmark >= 0.7.4, < 0.8',
             'urllib3 >= 1.23'
         ],
         "examples": [
