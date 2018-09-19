@@ -1,6 +1,3 @@
-*.diff
-.idea
-.DS_Store
 /dist/
 .ipynb_checkpoints/
 __pycache__

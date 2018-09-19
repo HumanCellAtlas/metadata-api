@@ -165,7 +165,6 @@ class ProjectContact(object):
         return hash(self) == hash(other)
 
 
-shown_data = False
 @dataclass(init=False)
 class Project(Entity):
     """
@@ -193,11 +192,7 @@ class Project(Entity):
 
     @property
     def laboratory_names(self) -> set:
-        """
-        The unique list of laboratory names.
-
-        .. deprecated:: 1.0b3.dev2
-        """
+        """The unique list of laboratory names"""
         warnings.warn(f"Project.laboratory_names is deprecated. "
                       f"Use contributors.laboratory instead.", DeprecationWarning)
         return {contributor.laboratory for contributor in self.contributors if contributor.laboratory}
