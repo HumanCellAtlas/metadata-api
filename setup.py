@@ -10,6 +10,8 @@ setup(
     # Not using tests_require because that installs the test requirements into .eggs, not the virtualenv
     extras_require={
         "dss": [
+            # setting commonmark is a temporary fix: https://github.com/HumanCellAtlas/metadata-api/issues/23
+            'commonmark >= 0.7.4, < 0.8',
             'hca == 4.1.4',
             'urllib3 >= 1.23'
         ],
