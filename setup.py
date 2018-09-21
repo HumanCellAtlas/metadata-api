@@ -21,6 +21,9 @@ setup(
         "coverage": [
             'coverage',
             'coveralls'
+        ],
+        "test": [
+            'checksumming_io == 0.0.1'
         ]
     },
     package_dir={'': 'src'},
