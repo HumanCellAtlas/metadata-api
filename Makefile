@@ -9,10 +9,10 @@ $(error Looks like Python 3.6 is not installed or active in the current virtuale
 endif
 
 install:
-	pip install -e .[dss,examples,coverage]
+	pip install -e .[dss,test,coverage,examples]
 
 travis_install:
-	pip install -e .[dss,coverage]
+	pip install -e .[dss,test,coverage]
 
 test: install
 	coverage run -m unittest discover -vs test
