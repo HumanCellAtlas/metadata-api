@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 
 setup(
     name="hca-metadata-api",
@@ -25,7 +25,7 @@ setup(
         ]
     },
     package_dir={'': 'src'},
-    packages=find_packages('src'),
+    packages=find_namespace_packages('src'),
     project_urls={
         "Source Code": "https://github.com/HumanCellAtlas/metadata-api",
     }
