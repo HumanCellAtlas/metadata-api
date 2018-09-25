@@ -138,7 +138,7 @@ class ProjectContact(object):
     """
     Project Contact
 
-    Schema: http://schema.staging.data.humancellatlas.org/module/project/6.1.1/contact.
+    Schema: https://schema.humancellatlas.org/module/project/6.1.3/contact
     """
     contact_name: str
     email: str
@@ -163,7 +163,7 @@ class Project(Entity):
     """
     Project
 
-    Schema: http://schema.staging.data.humancellatlas.org/type/project/9.0.0/project
+    Schema: http://schema.humancellatlas.org/type/project/9.0.2/project
     """
     project_title: Optional[str]
     project_short_name: Optional[str]
