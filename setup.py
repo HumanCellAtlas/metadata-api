@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="hca-metadata-api",
-    version="1.0b3.dev1",
+    version="1.0b4.dev1",
     license='MIT',
     install_requires=[
         'dataclasses >= 0.6'
