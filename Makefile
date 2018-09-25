@@ -12,6 +12,7 @@ install:
 	pip install -e .[dss,test,coverage,examples]
 
 travis_install:
+	pip install -U setuptools>=40.1.0
 	pip install -e .[dss,test,coverage]
 
 test: install
