@@ -107,46 +107,31 @@ class LinkError(RuntimeError):
                          other_entity.address)
 
 
-@dataclass(init=False)
-class ProjectPublication(object):
-    """
-    Project Publication
-
-    Schema: http://schema.staging.data.humancellatlas.org/module/project/5.2.2/publication
-    """
+@dataclass(init=False, unsafe_hash=True)
+class ProjectPublication:
     authors: List[str]
     publication_title: str
-    doi: str
-    pmid: int
+    doi: str  # Digital object identifier, used mainly to identify academic, professional, and government information
+    pmid: int  # PMID, the unique identifier number used in PubMed
     publication_url: str
 
     def __init__(self, json: JSON) -> None:
-        self.authors = json.get('authors')
+        self.authors = tuple(json.get('authors', []))
         self.publication_title = json.get('publication_title')
         self.doi = json.get('doi')
         self.pmid = json.get('pmid')
         self.publication_url = json.get('publication_url')
 
-    def __hash__(self):
-        return hash('::'.join(['/'.join(self.authors), self.publication_url,
-                               self.doi or 'undefined_doi', str(self.pmid or 'undefined_pmid'),
-                               self.publication_title]))
-
 
 @dataclass(init=False, unsafe_hash=True)
-class ProjectContact(object):
-    """
-    Project Contact
-
-    Schema: https://schema.humancellatlas.org/module/project/6.1.3/contact
-    """
+class ProjectContact:
     contact_name: str
     email: str
     phone: str
     institution: str
     laboratory: str
     corresponding_contributor: bool
-    orcid_id: str
+    orcid_id: str  # The individual's ORCID ID linked to previous work.
 
     def __init__(self, json: JSON) -> None:
         self.contact_name = json.get('contact_name')
@@ -155,21 +140,16 @@ class ProjectContact(object):
         self.institution = json.get('institution')
         self.laboratory = json.get('laboratory')
         self.corresponding_contributor = json.get('corresponding_contributor', False)
-        self.orcid_id = json.get('orcid_id')  # The individual's ORCID ID linked to previous work.
+        self.orcid_id = json.get('orcid_id')
 
 
 @dataclass(init=False)
 class Project(Entity):
-    """
-    Project
-
-    Schema: http://schema.humancellatlas.org/type/project/9.0.2/project
-    """
-    project_title: Optional[str]
     project_short_name: Optional[str]
-    laboratory_names: Set[str]
-    contributors: Set[ProjectContact]
+    project_description: Optional[str]
+    project_title: Optional[str]
     publications: Set[ProjectPublication]
+    contributors: Set[ProjectContact]
 
     def __init__(self, json: JSON) -> None:
         super().__init__(json)
@@ -185,15 +165,14 @@ class Project(Entity):
 
     @property
     def laboratory_names(self) -> set:
-        """The unique list of laboratory names"""
-        warnings.warn(f"Project.laboratory_names is deprecated. "
-                      f"Use contributors.laboratory instead.", DeprecationWarning)
+        warnings.warn("Project.laboratory_names is deprecated. "
+                      "Use contributors.laboratory instead.", DeprecationWarning)
         return {contributor.laboratory for contributor in self.contributors if contributor.laboratory}
 
     @property
     def project_shortname(self) -> str:
-        warnings.warn(f"Project.project_shortname is deprecated. "
-                      f"Use project_short_name instead.", DeprecationWarning)
+        warnings.warn("Project.project_shortname is deprecated. "
+                      "Use project_short_name instead.", DeprecationWarning)
         return self.project_short_name
 
 
