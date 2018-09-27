@@ -116,8 +116,8 @@ class ProjectPublication:
     publication_url: str
 
     def __init__(self, json: JSON) -> None:
-        self.authors = tuple(json.get('authors', []))
-        self.publication_title = json.get('publication_title')
+        self.authors = tuple(json['authors'])
+        self.publication_title = json['publication_title']
         self.doi = json.get('doi')
         self.pmid = json.get('pmid')
         self.publication_url = json.get('publication_url')
@@ -134,10 +134,10 @@ class ProjectContact:
     orcid_id: str  # The individual's ORCID ID linked to previous work.
 
     def __init__(self, json: JSON) -> None:
-        self.contact_name = json.get('contact_name')
+        self.contact_name = json['contact_name']
         self.email = json.get('email')
         self.phone = json.get('phone')
-        self.institution = json.get('institution')
+        self.institution = json['institution']
         self.laboratory = json.get('laboratory')
         self.corresponding_contributor = json.get('corresponding_contributor', False)
         self.orcid_id = json.get('orcid_id')
