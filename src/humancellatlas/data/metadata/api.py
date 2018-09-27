@@ -107,40 +107,36 @@ class LinkError(RuntimeError):
                          other_entity.address)
 
 
-@dataclass(init=False, unsafe_hash=True)
+@dataclass(frozen=True)
 class ProjectPublication:
-    authors: List[str]
     publication_title: str
-    doi: str  # Digital object identifier, used mainly to identify academic, professional, and government information
-    pmid: int  # PMID, the unique identifier number used in PubMed
     publication_url: str
 
-    def __init__(self, json: JSON) -> None:
-        self.authors = tuple(json['authors'])
-        self.publication_title = json['publication_title']
-        self.doi = json.get('doi')
-        self.pmid = json.get('pmid')
-        self.publication_url = json.get('publication_url')
+    @staticmethod
+    def from_json(json: JSON) -> None:
+        return ProjectPublication(
+            publication_title=json['publication_title'],
+            publication_url=json.get('publication_url')
+        )
 
 
-@dataclass(init=False, unsafe_hash=True)
+@dataclass(frozen=True)
 class ProjectContact:
     contact_name: str
     email: str
-    phone: str
     institution: str
     laboratory: str
     corresponding_contributor: bool
-    orcid_id: str  # The individual's ORCID ID linked to previous work.
 
-    def __init__(self, json: JSON) -> None:
-        self.contact_name = json['contact_name']
-        self.email = json.get('email')
-        self.phone = json.get('phone')
-        self.institution = json['institution']
-        self.laboratory = json.get('laboratory')
-        self.corresponding_contributor = json.get('corresponding_contributor', False)
-        self.orcid_id = json.get('orcid_id')
+    @staticmethod
+    def from_json(json: JSON) -> None:
+        return ProjectContact(
+            contact_name=json['contact_name'],
+            email=json.get('email'),
+            institution=json['institution'],
+            laboratory=json.get('laboratory'),
+            corresponding_contributor=json.get('corresponding_contributor', False)
+        )
 
 
 @dataclass(init=False)
@@ -160,8 +156,8 @@ class Project(Entity):
         self.project_short_name = lookup(core, 'project_short_name', 'project_shortname')
         self.project_description = core.get('project_description')
         self.project_title = core.get('project_title')
-        self.publications = set(ProjectPublication(publication) for publication in content.get('publications', []))
-        self.contributors = {ProjectContact(contributor) for contributor in content['contributors']}
+        self.publications = set(ProjectPublication.from_json(publication) for publication in content.get('publications', []))
+        self.contributors = {ProjectContact.from_json(contributor) for contributor in content['contributors']}
 
     @property
     def laboratory_names(self) -> set:
