@@ -122,7 +122,7 @@ class ProjectPublication:
 class ProjectContact:
     contact_name: str
     email: Optional[str]
-    institution: str
+    institution: str  # optional up to project/5.3.0/contact
     laboratory: Optional[str]
     corresponding_contributor: Optional[bool]
 
@@ -130,7 +130,7 @@ class ProjectContact:
     def from_json(cls, json: JSON) -> 'ProjectContact':
         return cls(contact_name=json['contact_name'],
                    email=json.get('email'),
-                   institution=json['institution'],
+                   institution=json.get('institution'),
                    laboratory=json.get('laboratory'),
                    corresponding_contributor=json.get('corresponding_contributor'))
 
@@ -138,7 +138,7 @@ class ProjectContact:
 @dataclass(init=False)
 class Project(Entity):
     project_short_name: str
-    project_description: str
+    project_description: str  # optional up to core/project/5.2.2/project_core
     project_title: str
     publications: Set[ProjectPublication]
     contributors: Set[ProjectContact]
@@ -148,8 +148,8 @@ class Project(Entity):
         content = json.get('content', json)
         core = content['project_core']
         self.project_short_name = lookup(core, 'project_short_name', 'project_shortname')
-        self.project_description = core['project_description']
         self.project_title = core['project_title']
+        self.project_description = core.get('project_description')
         self.publications = set(ProjectPublication.from_json(publication)
                                 for publication in content.get('publications', []))
         self.contributors = {ProjectContact.from_json(contributor) for contributor in content['contributors']}
