@@ -110,53 +110,48 @@ class LinkError(RuntimeError):
 @dataclass(frozen=True)
 class ProjectPublication:
     publication_title: str
-    publication_url: str
+    publication_url: Optional[str]
 
-    @staticmethod
-    def from_json(json: JSON) -> None:
-        return ProjectPublication(
-            publication_title=json['publication_title'],
-            publication_url=json.get('publication_url')
-        )
+    @classmethod
+    def from_json(cls, json: JSON) -> 'ProjectPublication':
+        return cls(publication_title=json['publication_title'],
+                   publication_url=json.get('publication_url'))
 
 
 @dataclass(frozen=True)
 class ProjectContact:
     contact_name: str
-    email: str
+    email: Optional[str]
     institution: str
-    laboratory: str
-    corresponding_contributor: bool
+    laboratory: Optional[str]
+    corresponding_contributor: Optional[bool]
 
-    @staticmethod
-    def from_json(json: JSON) -> None:
-        return ProjectContact(
-            contact_name=json['contact_name'],
-            email=json.get('email'),
-            institution=json['institution'],
-            laboratory=json.get('laboratory'),
-            corresponding_contributor=json.get('corresponding_contributor', False)
-        )
+    @classmethod
+    def from_json(cls, json: JSON) -> 'ProjectContact':
+        return cls(contact_name=json['contact_name'],
+                   email=json.get('email'),
+                   institution=json['institution'],
+                   laboratory=json.get('laboratory'),
+                   corresponding_contributor=json.get('corresponding_contributor'))
 
 
 @dataclass(init=False)
 class Project(Entity):
-    project_short_name: Optional[str]
-    project_description: Optional[str]
-    project_title: Optional[str]
+    project_short_name: str
+    project_description: str
+    project_title: str
     publications: Set[ProjectPublication]
     contributors: Set[ProjectContact]
 
     def __init__(self, json: JSON) -> None:
         super().__init__(json)
-
         content = json.get('content', json)
         core = content['project_core']
-
         self.project_short_name = lookup(core, 'project_short_name', 'project_shortname')
-        self.project_description = core.get('project_description')
-        self.project_title = core.get('project_title')
-        self.publications = set(ProjectPublication.from_json(publication) for publication in content.get('publications', []))
+        self.project_description = core['project_description']
+        self.project_title = core['project_title']
+        self.publications = set(ProjectPublication.from_json(publication)
+                                for publication in content.get('publications', []))
         self.contributors = {ProjectContact.from_json(contributor) for contributor in content['contributors']}
 
     @property
