@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, wait
 import doctest
+from itertools import chain
 import json
 import logging
 import os
@@ -96,8 +97,8 @@ class TestAccessorApi(TestCase):
             ('staging', 'aws', '859a8bd2-de3c-4c78-91dd-9e35a3418972', '2018-09-20T232924.687620Z', None),
             # A vx primary bundle with a specimen_from_organism as sequencing input
             ('staging', 'aws', '3e7c6f8e-334c-41fb-a1e5-ddd9fe70a0e2', '2018-09-20T230221.622042Z', None),
-            # A vx analysis bundle for the primary with a specimen_from_organism as sequencing input
-            ('staging', 'aws', '859a8bd2-de3c-4c78-91dd-9e35a3418972', '2018-09-20T232924.687620Z', None),
+            # A bundle containing a specimen_from_organism.json with a schema version of 2.7.1
+            ('staging', 'aws', '70184761-70fc-4b80-8c48-f406a478d5ab', '2018-09-05T182535.846470Z', None),
         ]:
             with self.subTest(uuid=uuid):
                 client = dss_client(deployment)
@@ -106,6 +107,25 @@ class TestAccessorApi(TestCase):
 
     def _assert_bundle(self, uuid, version, manifest, metadata_files, age_range, has_specimens=True):
         bundle = Bundle(uuid, version, manifest, metadata_files)
+        expected_disease_values = {'b2216048-7eaa-45f4-8077-5a3fb4204953': {'subcutaneous melanoma'},
+                                   '3e7c6f8e-334c-41fb-a1e5-ddd9fe70a0e2.2018-09-20T232924.687620Z': {'glioblastoma'},
+                                   '3e7c6f8e-334c-41fb-a1e5-ddd9fe70a0e2': {'glioblastoma'},
+                                   '859a8bd2-de3c-4c78-91dd-9e35a3418972.2018-09-20T230221.622042Z': {'glioblastoma'},
+                                   '70184761-70fc-4b80-8c48-f406a478d5ab.2018-09-05T182535.846470Z': {'glioblastoma'}}
+        biomaterials = bundle.biomaterials.values()
+        full_uuid = f"{uuid}{f'.{version}' if version else ''}"
+        if full_uuid in expected_disease_values.keys():
+            actual_diseases = set(chain(*[getattr(bm, 'diseases', {})
+                                          for bm in biomaterials if isinstance(bm, SpecimenFromOrganism)
+                                          or isinstance(bm, DonorOrganism)]))
+            diseases_from_old_field = set(chain(*[getattr(bm, 'disease', {})
+                                                  for bm in biomaterials if isinstance(bm, SpecimenFromOrganism)
+                                                  or isinstance(bm, DonorOrganism)]))
+            self.assertEquals(actual_diseases, expected_disease_values[full_uuid])
+            self.assertEquals(actual_diseases, diseases_from_old_field)
+        else:
+            logging.warning(f'Disease value was not tested. An expected disease value was not set for Bundle {uuid}'
+                            f'with version {version}. ')
         self.assertEqual(str(bundle.uuid), uuid)
         self.assertEqual(bundle.version, version)
         self.assertEqual(1, len(bundle.projects))
