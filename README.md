@@ -11,7 +11,7 @@ that would break direct access to the metadata.
 
 ## Installation
 
-Version 1.0 will be on PyPY but until then we need to install from GitHub: 
+Version 1.0 will be on PyPI but until then we need to install from GitHub: 
 
 ```
 virtualenv -p python3 foo
