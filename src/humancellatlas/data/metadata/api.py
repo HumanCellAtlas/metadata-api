@@ -204,7 +204,7 @@ class DonorOrganism(Biomaterial):
         super().__init__(json)
         content = json.get('content', json)
         self.genus_species = {gs['text'] for gs in content['genus_species']}
-        self.diseases = {d['text'] for d in lookup(content, 'disease', 'diseases', default=set()) if d}
+        self.diseases = {d['text'] for d in lookup(content, 'diseases', 'disease', default=[]) if d}
         self.organism_age = content.get('organism_age')
         self.organism_age_unit = content.get('organism_age_unit', {}).get('text')
         self.sex = lookup(content, 'sex', 'biological_sex')
@@ -240,7 +240,7 @@ class SpecimenFromOrganism(Biomaterial):
         super().__init__(json)
         content = json.get('content', json)
         self.storage_method = content.get('preservation_storage', {}).get('storage_method')
-        self.diseases = {d['text'] for d in lookup(content, 'disease', 'diseases', default=set()) if d}
+        self.diseases = {d['text'] for d in lookup(content, 'diseases', 'disease', default=[]) if d}
         self.organ = content.get('organ', {}).get('text')
         self.organ_part = content.get('organ_part', {}).get('text')
 
