@@ -133,6 +133,11 @@ class TestAccessorApi(TestCase):
         self.assertEqual(1, len(bundle.projects))
         project = list(bundle.projects.values())[0]
         self.assertEqual(Project, type(project))
+        for contributor in project.contributors:  # based on enum in module/project/6.1.3/contact
+            self.assertTrue(contributor.project_role in {'principal investigator', 'co investigator',
+                                                         'experimental scientist', 'computational scientist',
+                                                         'clinician', 'pathologist', 'technician', 'external curator',
+                                                         'Human Cell Atlas wrangler', 'other', None})
         # noinspection PyDeprecation
         self.assertLessEqual(len(project.laboratory_names), len(project.contributors))
         # noinspection PyDeprecation
