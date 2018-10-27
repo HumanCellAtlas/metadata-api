@@ -34,23 +34,34 @@ class TestAccessorApi(TestCase):
         warnings.simplefilter("ignore", ResourceWarning)
 
     def test_example_bundles(self):
-        for directory, age_range, diseases, has_specimens in [
+        for directory, age_range, diseases, has_specimens, project_roles in [
             ('CD4+ cytotoxic T lymphocytes',
-             AgeRange(min=567648000.0, max=1892160000.0), {'normal'}, True),
+             AgeRange(min=567648000.0, max=1892160000.0), {'normal'}, True,
+             [None, 'Human Cell Atlas wrangler', 'external curator']),
             ('Healthy and type 2 diabetes pancreas',
-             AgeRange(min=1356048000.0, max=1356048000.0), {'normal'}, True),
+             AgeRange(min=1356048000.0, max=1356048000.0), {'normal'}, True,
+             [None, None, None, 'Human Cell Atlas wrangler', 'external curator']),
             ('HPSI_human_cerebral_organoids',
-             AgeRange(min=1419120000.0, max=1545264000.0), {'normal'}, True),
+             AgeRange(min=1419120000.0, max=1545264000.0), {'normal'}, True,
+             ['principal investigator', None, None, None, 'Human Cell Atlas wrangler']),
             ('Mouse Melanoma',
-             AgeRange(3628800.0, 7257600.0), {'subcutaneous melanoma'}, True),
+             AgeRange(3628800.0, 7257600.0), {'subcutaneous melanoma'}, True,
+             [None, None, None, None, None, None, None, None, None, None,
+              'Human Cell Atlas wrangler', 'Human Cell Atlas wrangler']),
             ('Single cell transcriptome analysis of human pancreas',
-             AgeRange(662256000.0, 662256000.0), {'normal'},True),
+             AgeRange(662256000.0, 662256000.0), {'normal'}, True,
+             [None, 'external curator', 'Human Cell Atlas wrangler']),
             ('Tissue stability',
-             AgeRange(1734480000.0, 1892160000.0), {'normal'}, False),
+             AgeRange(1734480000.0, 1892160000.0), {'normal'}, False,
+             [None, None, None, None, None, None, None, None, None, None, None, None, None,
+              'Human Cell Atlas wrangler', 'Human Cell Atlas wrangler']),
             ('HPSI_human_cerebral_organoids',
-             AgeRange(1419120000.0, 1545264000.0), {'normal'}, True),
+             AgeRange(1419120000.0, 1545264000.0), {'normal'}, True,
+             ['principal investigator', None, None, None, 'Human Cell Atlas wrangler']),
             ('1M Immune Cells',
-             AgeRange(1639872000.0, 1639872000.0), None, True)
+             AgeRange(1639872000.0, 1639872000.0), None, True,
+             [None, None, None, None, None, None, None, None, None, None, None, None,
+              'Human Cell Atlas wrangler', 'Human Cell Atlas wrangler'])
         ]:
             with self.subTest(dir=directory):
                 manifest, metadata_files = download_example_bundle(repo='HumanCellAtlas/metadata-schema',
@@ -59,8 +70,8 @@ class TestAccessorApi(TestCase):
                 uuid = 'b2216048-7eaa-45f4-8077-5a3fb4204953'
                 version = '2018-08-03T082009.272868Z'
                 self._assert_bundle(uuid=uuid, version=version,
-                                    manifest=manifest, metadata_files=metadata_files,
-                                    age_range=age_range, diseases=diseases, has_specimens=has_specimens)
+                                    manifest=manifest, metadata_files=metadata_files, age_range=age_range,
+                                    diseases=diseases, has_specimens=has_specimens, project_roles=project_roles)
 
     def test_bad_content(self):
         deployment, replica, uuid = 'staging', 'aws', 'df00a6fc-0015-4ae0-a1b7-d4b08af3c5a6'
@@ -118,7 +129,8 @@ class TestAccessorApi(TestCase):
                 version, manifest, metadata_files = download_bundle_metadata(client, replica, uuid, version)
                 self._assert_bundle(uuid, version, manifest, metadata_files, age_range, diseases)
 
-    def _assert_bundle(self, uuid, version, manifest, metadata_files, age_range, diseases, has_specimens=True):
+    def _assert_bundle(self, uuid, version, manifest, metadata_files, age_range, diseases, has_specimens=True,
+                       project_roles=None):
         bundle = Bundle(uuid, version, manifest, metadata_files)
         diseases = diseases or set()
         biomaterials = bundle.biomaterials.values()
@@ -133,11 +145,11 @@ class TestAccessorApi(TestCase):
         self.assertEqual(1, len(bundle.projects))
         project = list(bundle.projects.values())[0]
         self.assertEqual(Project, type(project))
-        for contributor in project.contributors:  # based on enum in module/project/6.1.3/contact
-            self.assertTrue(contributor.project_role in {'principal investigator', 'co investigator',
-                                                         'experimental scientist', 'computational scientist',
-                                                         'clinician', 'pathologist', 'technician', 'external curator',
-                                                         'Human Cell Atlas wrangler', 'other', None})
+        if project_roles is not None:
+            def role_sort_key(role):
+                return role or ''
+            self.assertEqual(sorted(project_roles, key=role_sort_key),
+                             sorted([c.project_role for c in project.contributors], key=role_sort_key))
         # noinspection PyDeprecation
         self.assertLessEqual(len(project.laboratory_names), len(project.contributors))
         # noinspection PyDeprecation
