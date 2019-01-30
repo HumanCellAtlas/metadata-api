@@ -279,7 +279,14 @@ class CellLine(Biomaterial):
 
 @dataclass(init=False)
 class Organoid(Biomaterial):
-    pass
+    model_organ: Optional[str]
+    model_organ_part: Optional[str]
+
+    def __init__(self, json: JSON) -> None:
+        super().__init__(json)
+        content = json.get('content', json)
+        self.model_organ = lookup(content, 'model_organ', 'model_for_organ', default={}).get('text')
+        self.model_organ_part = content.get('model_organ_part', {}).get('text')
 
 
 @dataclass(init=False)
