@@ -258,7 +258,7 @@ class SpecimenFromOrganism(Biomaterial):
 
 @dataclass(init=False)
 class CellSuspension(Biomaterial):
-    total_estimated_cells: int
+    total_estimated_cells: Optional[int]
 
     def __init__(self, json: JSON) -> None:
         super().__init__(json)
