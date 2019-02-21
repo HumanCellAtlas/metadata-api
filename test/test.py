@@ -133,31 +133,34 @@ class TestAccessorApi(TestCase):
                           age_range=AgeRange(3628800.0, 7257600.0),
                           diseases={'subcutaneous melanoma'}),
 
-    def test_vx_primary_cs_bundle(self):
-        """
-        A vx primary bundle with a cell_suspension as sequencing input
-        """
-        self._test_bundle(uuid='3e7c6f8e-334c-41fb-a1e5-ddd9fe70a0e2',
-                          deployment='staging',
-                          diseases={'glioblastoma'}),
+    # TODO: replace deleted bundle with a canned bundle for this test
+    # def test_vx_primary_cs_bundle(self):
+    #     """
+    #     A vx primary bundle with a cell_suspension as sequencing input
+    #     """
+    #     self._test_bundle(uuid='3e7c6f8e-334c-41fb-a1e5-ddd9fe70a0e2',
+    #                       deployment='staging',
+    #                       diseases={'glioblastoma'}),
 
-    def test_vx_analysis_cs_bundle(self):
-        """
-        A vx analysis bundle for the primary bundle with a cell_suspension as sequencing input
-        """
-        self._test_bundle(uuid='859a8bd2-de3c-4c78-91dd-9e35a3418972',
-                          version='2018-09-20T232924.687620Z',
-                          deployment='staging',
-                          diseases={'glioblastoma'}),
+    # TODO: replace deleted bundle with a canned bundle for this test
+    # def test_vx_analysis_cs_bundle(self):
+    #     """
+    #     A vx analysis bundle for the primary bundle with a cell_suspension as sequencing input
+    #     """
+    #     self._test_bundle(uuid='859a8bd2-de3c-4c78-91dd-9e35a3418972',
+    #                       version='2018-09-20T232924.687620Z',
+    #                       deployment='staging',
+    #                       diseases={'glioblastoma'}),
 
-    def test_vx_analysis_specimen_bundle(self):
-        """
-        A vx primary bundle with a specimen_from_organism as sequencing input
-        """
-        self._test_bundle(uuid='3e7c6f8e-334c-41fb-a1e5-ddd9fe70a0e2',
-                          version='2018-09-20T230221.622042Z',
-                          deployment='staging',
-                          diseases={'glioblastoma'}),
+    # TODO: replace deleted bundle with a canned bundle for this test
+    # def test_vx_analysis_specimen_bundle(self):
+    #     """
+    #     A vx primary bundle with a specimen_from_organism as sequencing input
+    #     """
+    #     self._test_bundle(uuid='3e7c6f8e-334c-41fb-a1e5-ddd9fe70a0e2',
+    #                       version='2018-09-20T230221.622042Z',
+    #                       deployment='staging',
+    #                       diseases={'glioblastoma'}),
 
     def test_vx_specimen_v271_bundle(self):
         """
