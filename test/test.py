@@ -133,7 +133,7 @@ class TestAccessorApi(TestCase):
                           age_range=AgeRange(3628800.0, 7257600.0),
                           diseases={'subcutaneous melanoma'}),
 
-    # TODO: replace deleted bundle with a canned bundle for this test
+    # TODO: Use bundle from production to fix test broken by missing bundle
     # def test_vx_primary_cs_bundle(self):
     #     """
     #     A vx primary bundle with a cell_suspension as sequencing input
@@ -142,7 +142,7 @@ class TestAccessorApi(TestCase):
     #                       deployment='staging',
     #                       diseases={'glioblastoma'}),
 
-    # TODO: replace deleted bundle with a canned bundle for this test
+    # TODO: Use bundle from production to fix test broken by missing bundle
     # def test_vx_analysis_cs_bundle(self):
     #     """
     #     A vx analysis bundle for the primary bundle with a cell_suspension as sequencing input
@@ -152,7 +152,7 @@ class TestAccessorApi(TestCase):
     #                       deployment='staging',
     #                       diseases={'glioblastoma'}),
 
-    # TODO: replace deleted bundle with a canned bundle for this test
+    # TODO: Use bundle from production to fix test broken by missing bundle
     # def test_vx_analysis_specimen_bundle(self):
     #     """
     #     A vx primary bundle with a specimen_from_organism as sequencing input
