@@ -412,21 +412,12 @@ class LibraryPreparationProtocol(Protocol):
 
 @dataclass(init=False)
 class SequencingProtocol(Protocol):
-    method: str
     instrument_manufacturer_model: str
 
     def __init__(self, json: JSON):
         super().__init__(json)
         content = json.get('content', json)
         self.instrument_manufacturer_model = content.get('instrument_manufacturer_model', {}).get('text')
-        temp = lookup(content, 'method', 'sequencing_approach')
-        self.method = temp['text'] if isinstance(temp, dict) else temp
-
-    @property
-    def sequencing_approach(self) -> str:
-        warnings.warn(f"SequencingProtocol.sequencing_approach is deprecated. "
-                      f"Use SequencingProtocol.method instead.", DeprecationWarning)
-        return self.method
 
 @dataclass(init=False)
 class AnalysisProtocol(Protocol):
@@ -440,28 +431,7 @@ class AggregateGenerationProtocol(Protocol):
 
 @dataclass(init=False)
 class CollectionProtocol(Protocol):
-    method: str
-    reagents: Set[str]
-
-    def __init__(self, json: JSON) -> None:
-        super().__init__(json)
-        content = json.get('content', json)
-        temp = lookup(content, 'method', 'collection_method')
-        self.method = temp['text'] if isinstance(temp, dict) else temp
-        temp = lookup(content, 'reagents', 'protocol_reagents', default=[])
-        self.reagents = {r['catalog_number'] for r in temp if r}
-
-    @property
-    def collection_method(self) -> str:
-        warnings.warn(f"CollectionProtocol.collection_method is deprecated. "
-                      f"Use CollectionProtocol.method instead.", DeprecationWarning)
-        return self.method
-
-    @property
-    def protocol_reagents(self) -> str:
-        warnings.warn(f"CollectionProtocol.protocol_reagents is deprecated. "
-                      f"Use CollectionProtocol.reagents instead.", DeprecationWarning)
-        return self.reagents
+    pass
 
 
 @dataclass(init=False)
@@ -471,28 +441,7 @@ class DifferentiationProtocol(Protocol):
 
 @dataclass(init=False)
 class DissociationProtocol(Protocol):
-    method: str
-    reagents: Set[str]
-
-    def __init__(self, json: JSON) -> None:
-        super().__init__(json)
-        content = json.get('content', json)
-        temp = lookup(content, 'method', 'dissociation_method')
-        self.method = temp['text'] if isinstance(temp, dict) else temp
-        temp = lookup(content, 'reagents', 'protocol_reagents', default=[])
-        self.reagents = {r['retail_name'] for r in temp if r}
-
-    @property
-    def dissociation_method(self) -> str:
-        warnings.warn(f"DissociationProtocol.dissociation_method is deprecated. "
-                      f"Use DissociationProtocol.method instead.", DeprecationWarning)
-        return self.method
-
-    @property
-    def protocol_reagents(self) -> str:
-        warnings.warn(f"DissociationProtocol.protocol_reagents is deprecated. "
-                      f"Use DissociationProtocol.reagents instead.", DeprecationWarning)
-        return self.reagents
+    pass
 
 
 @dataclass(init=False)

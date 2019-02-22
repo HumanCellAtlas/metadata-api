@@ -18,9 +18,6 @@ from humancellatlas.data.metadata.api import (AgeRange,
                                               SpecimenFromOrganism,
                                               CellSuspension,
                                               LibraryPreparationProtocol,
-                                              SequencingProtocol,
-                                              CollectionProtocol,
-                                              DissociationProtocol,
                                               SupplementaryFile)
 from humancellatlas.data.metadata.helpers.dss import download_bundle_metadata, dss_client
 from humancellatlas.data.metadata.helpers.json import as_json
@@ -44,31 +41,36 @@ class TestAccessorApi(TestCase):
                                   diseases={'normal'},
                                   project_roles={None, 'Human Cell Atlas wrangler', 'external curator'},
                                   storage_methods={'frozen, liquid nitrogen'},
-                                  preservation_methods={'cryopreservation, other'})
+                                  preservation_methods={'cryopreservation, other'},
+                                  library_construction_methods={'Smart-seq2'})
 
     def test_diabetes_pancreas(self):
         self._test_example_bundle(directory='Healthy and type 2 diabetes pancreas',
                                   age_range=AgeRange(min=1356048000.0, max=1356048000.0),
                                   diseases={'normal'},
-                                  project_roles={None, 'Human Cell Atlas wrangler', 'external curator'})
+                                  project_roles={None, 'Human Cell Atlas wrangler', 'external curator'},
+                                  library_construction_methods={'Smart-seq2'})
 
     def test_hpsi(self):
         self._test_example_bundle(directory='HPSI_human_cerebral_organoids',
                                   age_range=AgeRange(min=1419120000.0, max=1545264000.0),
                                   diseases={'normal'},
-                                  project_roles={None, 'principal investigator', 'Human Cell Atlas wrangler'})
+                                  project_roles={None, 'principal investigator', 'Human Cell Atlas wrangler'},
+                                  library_construction_methods={"Chromium 3' Single Cell v2"})
 
     def test_mouse(self):
         self._test_example_bundle(directory='Mouse Melanoma',
                                   age_range=AgeRange(3628800.0, 7257600.0),
                                   diseases={'subcutaneous melanoma'},
-                                  project_roles={None, 'Human Cell Atlas wrangler', 'Human Cell Atlas wrangler'})
+                                  project_roles={None, 'Human Cell Atlas wrangler', 'Human Cell Atlas wrangler'},
+                                  library_construction_methods={'Smart-seq2'})
 
     def test_pancreas(self):
         self._test_example_bundle(directory='Single cell transcriptome analysis of human pancreas',
                                   age_range=AgeRange(662256000.0, 662256000.0),
                                   diseases={'normal'},
-                                  project_roles={None, 'external curator', 'Human Cell Atlas wrangler'})
+                                  project_roles={None, 'external curator', 'Human Cell Atlas wrangler'},
+                                  library_construction_methods={'smart-seq2'})
 
     def test_tissue_stability(self):
         self._test_example_bundle(directory='Tissue stability',
@@ -76,13 +78,15 @@ class TestAccessorApi(TestCase):
                                   diseases={'normal'},
                                   storage_methods=set(),
                                   preservation_methods=set(),
-                                  project_roles={None, 'Human Cell Atlas wrangler', 'Human Cell Atlas wrangler'})
+                                  project_roles={None, 'Human Cell Atlas wrangler', 'Human Cell Atlas wrangler'},
+                                  library_construction_methods={'10X sequencing'})
 
     def test_immune_cells(self):
         self._test_example_bundle(directory='1M Immune Cells',
                                   age_range=AgeRange(1639872000.0, 1639872000.0),
                                   diseases=set(),
-                                  project_roles={None, 'Human Cell Atlas wrangler', 'Human Cell Atlas wrangler'})
+                                  project_roles={None, 'Human Cell Atlas wrangler', 'Human Cell Atlas wrangler'},
+                                  library_construction_methods={'10X sequencing'})
 
     def _test_example_bundle(self, directory, **kwargs):
         manifest, metadata_files = download_example_bundle(repo='HumanCellAtlas/metadata-schema',
@@ -176,7 +180,8 @@ class TestAccessorApi(TestCase):
         self._test_bundle(uuid='70184761-70fc-4b80-8c48-f406a478d5ab',
                           version='2018-09-05T182535.846470Z',
                           deployment='staging',
-                          diseases={'glioblastoma'}),
+                          diseases={'glioblastoma'},
+                          library_construction_methods={'Smart-seq2'})
 
     def test_preservation_storage_bundle(self):
         """
@@ -189,7 +194,8 @@ class TestAccessorApi(TestCase):
                           diseases={'normal'},
                           project_roles={'Human Cell Atlas wrangler', None, 'external curator'},
                           storage_methods={'frozen, liquid nitrogen'},
-                          preservation_methods={'cryopreservation, other'})
+                          preservation_methods={'cryopreservation, other'},
+                          library_construction_methods={'Smart-seq2'})
 
     def test_dissociation_protocol_fields(self):
         """
@@ -200,7 +206,8 @@ class TestAccessorApi(TestCase):
                           version='2019-01-03T163633.780215Z',
                           age_range=AgeRange(1734480000.0, 1860624000.0),
                           diseases={'normal'},
-                          project_roles={None, 'principal investigator', 'Human Cell Atlas wrangler'})
+                          project_roles={None, 'principal investigator', 'Human Cell Atlas wrangler'},
+                          library_construction_methods={"Chromium 3' Single Cell v2"})
 
     def test_collection_protocol_fields(self):
         """
@@ -211,7 +218,8 @@ class TestAccessorApi(TestCase):
                           version='2018-11-28T114400.960969Z',
                           age_range=AgeRange(2302128000.0, 2302128000.0),
                           diseases={'isolated hip osteoarthritis'},
-                          project_roles={None, 'Human Cell Atlas wrangler'})
+                          project_roles={None, 'Human Cell Atlas wrangler'},
+                          library_construction_methods={'MARS-seq'})
 
     def _test_bundle(self, uuid, deployment=None, replica='aws', version=None, **assertion_kwargs):
         client = dss_client(deployment)
@@ -227,7 +235,8 @@ class TestAccessorApi(TestCase):
                        diseases=frozenset({None}),
                        project_roles=frozenset({None}),
                        storage_methods=frozenset({None}),
-                       preservation_methods=frozenset({None})):
+                       preservation_methods=frozenset({None}),
+                       library_construction_methods=frozenset()):
         bundle = Bundle(uuid, version, manifest, metadata_files)
         biomaterials = bundle.biomaterials.values()
         actual_diseases = set(chain(*(bm.diseases for bm in biomaterials
@@ -245,28 +254,6 @@ class TestAccessorApi(TestCase):
         self.assertEqual(CellSuspension, type(cell_suspension))
         # noinspection PyDeprecation
         self.assertEqual(cell_suspension.estimated_cell_count, cell_suspension.total_estimated_cells)
-
-        for protocol in bundle.protocols.values():
-            if isinstance(protocol, LibraryPreparationProtocol):
-                self.assertEqual(LibraryPreparationProtocol, type(protocol))
-                # noinspection PyDeprecation
-                self.assertEqual(protocol.library_construction_method, protocol.library_construction_approach)
-            if isinstance(protocol, SequencingProtocol):
-                self.assertEqual(SequencingProtocol, type(protocol))
-                # noinspection PyDeprecation
-                self.assertEqual(protocol.method, protocol.sequencing_approach)
-            if isinstance(protocol, CollectionProtocol):
-                self.assertEqual(CollectionProtocol, type(protocol))
-                # noinspection PyDeprecation
-                self.assertEqual(protocol.method, protocol.collection_method)
-                # noinspection PyDeprecation
-                self.assertEqual(protocol.reagents, protocol.protocol_reagents)
-            if isinstance(protocol, DissociationProtocol):
-                self.assertEqual(DissociationProtocol, type(protocol))
-                # noinspection PyDeprecation
-                self.assertEqual(protocol.method, protocol.dissociation_method)
-                # noinspection PyDeprecation
-                self.assertEqual(protocol.reagents, protocol.protocol_reagents)
 
         project = list(bundle.projects.values())[0]
         self.assertEqual(Project, type(project))
@@ -320,6 +307,13 @@ class TestAccessorApi(TestCase):
 
         # Prove that as_json returns a valid JSON structure (no cycles, correct types, etc.)
         self.assertTrue(isinstance(json.dumps(as_json(bundle)), str))
+
+        library_prep_protos = [p for p in bundle.protocols.values() if isinstance(p, LibraryPreparationProtocol)]
+        library_prep_proto_types = {type(p) for p in library_prep_protos}
+        has_library_preps = library_construction_methods != set() or len(library_prep_protos) > 0
+        self.assertEqual({LibraryPreparationProtocol} if has_library_preps else set(), library_prep_proto_types)
+        self.assertEqual(library_construction_methods, {p.library_construction_method for p in library_prep_protos})
+        self.assertEqual(library_construction_methods, {p.library_construction_approach for p in library_prep_protos})
 
     dss_subscription_query = {
         "query": {
