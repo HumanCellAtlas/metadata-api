@@ -315,7 +315,7 @@ class TestAccessorApi(TestCase):
         self.assertEqual(storage_methods, {s.storage_method for s in bundle.specimens})
         self.assertEqual(preservation_methods, {s.preservation_method for s in bundle.specimens})
 
-        print(json.dumps(as_json(bundle), indent=4))
+        # print(json.dumps(as_json(bundle), indent=4))
 
     dss_subscription_query = {
         "query": {
