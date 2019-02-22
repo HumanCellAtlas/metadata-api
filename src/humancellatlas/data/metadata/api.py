@@ -449,7 +449,7 @@ class CollectionProtocol(Protocol):
         temp = lookup(content, 'method', 'collection_method')
         self.method = temp['text'] if isinstance(temp, dict) else temp
         temp = lookup(content, 'reagents', 'protocol_reagents', default=[])
-        self.reagents = {r['retail_name'] for r in temp if r}
+        self.reagents = {r['catalog_number'] for r in temp if r}
 
     @property
     def collection_method(self) -> str:

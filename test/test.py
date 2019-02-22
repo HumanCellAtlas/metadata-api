@@ -17,6 +17,10 @@ from humancellatlas.data.metadata.api import (AgeRange,
                                               SequenceFile,
                                               SpecimenFromOrganism,
                                               CellSuspension,
+                                              LibraryPreparationProtocol,
+                                              SequencingProtocol,
+                                              CollectionProtocol,
+                                              DissociationProtocol,
                                               SupplementaryFile)
 from humancellatlas.data.metadata.helpers.dss import download_bundle_metadata, dss_client
 from humancellatlas.data.metadata.helpers.json import as_json
@@ -133,6 +137,28 @@ class TestAccessorApi(TestCase):
                           age_range=AgeRange(3628800.0, 7257600.0),
                           diseases={'subcutaneous melanoma'}),
 
+    def test_dissociation_protocol_fields(self):
+        """
+        A bundle in production containing a dissociation_protocol.json
+        with dissociation_method and protocol_reagents fields
+        """
+        self._test_bundle(uuid='6b498499-c5b4-452f-9ff9-2318dbb86000',
+                          version='2019-01-03T163633.780215Z',
+                          age_range=AgeRange(1734480000.0, 1860624000.0),
+                          diseases={'normal'},
+                          project_roles={None, 'principal investigator', 'Human Cell Atlas wrangler'})
+
+    def test_collection_protocol_fields(self):
+        """
+        A bundle in production containing a collection_protocol.json
+        with collection_method and protocol_reagents fields
+        """
+        self._test_bundle(uuid='4d0b29e0-e907-4754-9298-9fb112d482f9',
+                          version='2018-11-28T114400.960969Z',
+                          age_range=AgeRange(2302128000.0, 2302128000.0),
+                          diseases={'isolated hip osteoarthritis'},
+                          project_roles={None, 'Human Cell Atlas wrangler'})
+
     # TODO: Use bundle from production to fix test broken by missing bundle
     # def test_vx_primary_cs_bundle(self):
     #     """
@@ -216,6 +242,28 @@ class TestAccessorApi(TestCase):
         self.assertEqual(CellSuspension, type(cell_suspension))
         # noinspection PyDeprecation
         self.assertEqual(cell_suspension.estimated_cell_count, cell_suspension.total_estimated_cells)
+
+        for protocol in bundle.protocols.values():
+            if isinstance(protocol, LibraryPreparationProtocol):
+                self.assertEqual(LibraryPreparationProtocol, type(protocol))
+                # noinspection PyDeprecation
+                self.assertEqual(protocol.library_construction_method, protocol.library_construction_approach)
+            if isinstance(protocol, SequencingProtocol):
+                self.assertEqual(SequencingProtocol, type(protocol))
+                # noinspection PyDeprecation
+                self.assertEqual(protocol.method, protocol.sequencing_approach)
+            if isinstance(protocol, CollectionProtocol):
+                self.assertEqual(CollectionProtocol, type(protocol))
+                # noinspection PyDeprecation
+                self.assertEqual(protocol.method, protocol.collection_method)
+                # noinspection PyDeprecation
+                self.assertEqual(protocol.reagents, protocol.protocol_reagents)
+            if isinstance(protocol, DissociationProtocol):
+                self.assertEqual(DissociationProtocol, type(protocol))
+                # noinspection PyDeprecation
+                self.assertEqual(protocol.method, protocol.dissociation_method)
+                # noinspection PyDeprecation
+                self.assertEqual(protocol.reagents, protocol.protocol_reagents)
 
         project = list(bundle.projects.values())[0]
         self.assertEqual(Project, type(project))
