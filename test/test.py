@@ -318,7 +318,8 @@ class TestAccessorApi(TestCase):
         self.assertEqual(storage_methods, {s.storage_method for s in bundle.specimens})
         self.assertEqual(preservation_methods, {s.preservation_method for s in bundle.specimens})
 
-        # print(json.dumps(as_json(bundle), indent=4))
+        # Prove that as_json returns a valid JSON structure (no cycles, correct types, etc.)
+        self.assertTrue(isinstance(json.dumps(as_json(bundle)), str))
 
     dss_subscription_query = {
         "query": {
