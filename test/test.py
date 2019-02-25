@@ -197,30 +197,6 @@ class TestAccessorApi(TestCase):
                           preservation_methods={'cryopreservation, other'},
                           library_construction_methods={'Smart-seq2'})
 
-    def test_dissociation_protocol_fields(self):
-        """
-        A bundle in production containing a dissociation_protocol.json
-        with dissociation_method and protocol_reagents fields
-        """
-        self._test_bundle(uuid='6b498499-c5b4-452f-9ff9-2318dbb86000',
-                          version='2019-01-03T163633.780215Z',
-                          age_range=AgeRange(1734480000.0, 1860624000.0),
-                          diseases={'normal'},
-                          project_roles={None, 'principal investigator', 'Human Cell Atlas wrangler'},
-                          library_construction_methods={"Chromium 3' Single Cell v2"})
-
-    def test_collection_protocol_fields(self):
-        """
-        A bundle in production containing a collection_protocol.json
-        with collection_method and protocol_reagents fields
-        """
-        self._test_bundle(uuid='4d0b29e0-e907-4754-9298-9fb112d482f9',
-                          version='2018-11-28T114400.960969Z',
-                          age_range=AgeRange(2302128000.0, 2302128000.0),
-                          diseases={'isolated hip osteoarthritis'},
-                          project_roles={None, 'Human Cell Atlas wrangler'},
-                          library_construction_methods={'MARS-seq'})
-
     def _test_bundle(self, uuid, deployment=None, replica='aws', version=None, **assertion_kwargs):
         client = dss_client(deployment)
         version, manifest, metadata_files = download_bundle_metadata(client, replica, uuid, version)
