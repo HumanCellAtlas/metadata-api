@@ -159,10 +159,10 @@ class Project(Entity):
         self.publications = set(ProjectPublication.from_json(publication)
                                 for publication in content.get('publications', []))
         self.contributors = {ProjectContact.from_json(contributor) for contributor in content['contributors']}
-        self.insdc_project_accessions = {acc for acc in content.get('insdc_project_accessions', []) if acc}
-        self.geo_series_accessions = {acc for acc in content.get('geo_series_accessions', []) if acc}
-        self.array_express_accessions = {acc for acc in content.get('array_express_accessions', []) if acc}
-        self.insdc_study_accessions = {acc for acc in content.get('insdc_study_accessions', []) if acc}
+        self.insdc_project_accessions = {acc for acc in content.get('insdc_project_accessions', [])}
+        self.geo_series_accessions = {acc for acc in content.get('geo_series_accessions', [])}
+        self.array_express_accessions = {acc for acc in content.get('array_express_accessions', [])}
+        self.insdc_study_accessions = {acc for acc in content.get('insdc_study_accessions', [])}
 
     @property
     def laboratory_names(self) -> set:
