@@ -268,14 +268,10 @@ class TestAccessorApi(TestCase):
         # noinspection PyDeprecation
         self.assertEqual(project.project_short_name, project.project_shortname)
 
-        if insdc_project_accessions != set() or project.insdc_project_accessions != set():
-            self.assertEqual(insdc_project_accessions, project.insdc_project_accessions)
-        if geo_series_accessions != set() or project.geo_series_accessions != set():
-            self.assertEqual(geo_series_accessions, project.geo_series_accessions)
-        if array_express_accessions != set() or project.array_express_accessions != set():
-            self.assertEqual(array_express_accessions, project.array_express_accessions)
-        if insdc_study_accessions != set() or project.insdc_study_accessions != set():
-            self.assertEqual(insdc_study_accessions, project.insdc_study_accessions)
+        self.assertEqual(insdc_project_accessions, project.insdc_project_accessions)
+        self.assertEqual(geo_series_accessions, project.geo_series_accessions)
+        self.assertEqual(array_express_accessions, project.array_express_accessions)
+        self.assertEqual(insdc_study_accessions, project.insdc_study_accessions)
 
         root_entities = bundle.root_entities().values()
         root_entity_types = {type(e) for e in root_entities}
