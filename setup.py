@@ -21,7 +21,7 @@ setup(
             'coveralls'
         ],
         "test": [
-            'checksumming_io == 0.0.1'
+            'checksumming_io == 0.0.1',
             'atomicwrites == 1.3.0'
         ]
     },
