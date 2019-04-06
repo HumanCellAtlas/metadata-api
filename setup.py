@@ -2,7 +2,7 @@ from setuptools import setup, find_namespace_packages
 
 setup(
     name="hca-metadata-api",
-    version="1.0b12",
+    version="1.0b13",
     license='MIT',
     install_requires=[
         'dataclasses >= 0.6'
@@ -21,7 +21,8 @@ setup(
             'coveralls'
         ],
         "test": [
-            'checksumming_io == 0.0.1'
+            'checksumming_io == 0.0.1',
+            'atomicwrites == 1.3.0'
         ]
     },
     package_dir={'': 'src'},
