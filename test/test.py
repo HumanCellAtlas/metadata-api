@@ -19,6 +19,7 @@ from humancellatlas.data.metadata.api import (AgeRange,
                                               SequenceFile,
                                               SpecimenFromOrganism,
                                               CellSuspension,
+                                              AnalysisProtocol,
                                               LibraryPreparationProtocol,
                                               SequencingProtocol,
                                               SupplementaryFile,
@@ -484,6 +485,19 @@ class TestAccessorApi(TestCase):
         # FIXME: Assert JSON output?
 
         self.assertEqual({}, errors)
+
+    def test_analysis_protocol(self):
+        uuid = 'ffee7f29-5c38-461a-8771-a68e20ec4a2e'
+        version = '2019-02-02T065454.662896Z'
+        replica = 'aws'
+        deployment = ''  # blank for prod
+        manifest, metadata_files = self._load_bundle(uuid, version, replica, deployment)
+        bundle = Bundle(uuid, version, manifest, metadata_files)
+        analysis_protocols = [p for p in bundle.protocols.values() if isinstance(p, AnalysisProtocol)]
+        self.assertEqual(len(analysis_protocols), 1)
+        self.assertEqual(str(analysis_protocols[0].document_id), 'bb17ee61-193e-4ae1-a014-4f1b1c19b8b7')
+        self.assertEqual(analysis_protocols[0].protocol_id, 'smartseq2_v2.2.0')
+        self.assertEqual(analysis_protocols[0].protocol_name, None)
 
 
 # noinspection PyUnusedLocal
