@@ -10,7 +10,7 @@ setup(
     # Not using tests_require because that installs the test requirements into .eggs, not the virtualenv
     extras_require={
         "dss": [
-            'hca == 4.4.1',
+            'hca == 5.2.0',
             'urllib3 >= 1.23'
         ],
         "examples": [
