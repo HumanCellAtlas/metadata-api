@@ -2,7 +2,7 @@ from setuptools import setup, find_namespace_packages
 
 setup(
     name="hca-metadata-api",
-    version="1.0b15",
+    version="1.0b16",
     license='MIT',
     install_requires=[
         'dataclasses >= 0.6'
@@ -10,7 +10,7 @@ setup(
     # Not using tests_require because that installs the test requirements into .eggs, not the virtualenv
     extras_require={
         "dss": [
-            'hca == 4.4.1',
+            'hca == 5.2.0',
             'urllib3 >= 1.23'
         ],
         "examples": [
