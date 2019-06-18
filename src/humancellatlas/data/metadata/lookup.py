@@ -1,12 +1,27 @@
-from typing import TypeVar, Mapping, Union, Iterable
+from typing import TypeVar, Mapping, Union, Iterable, List
 from enum import Enum
+from jsonpath_rw import jsonpath, parse
 
 K = TypeVar('K')
 V = TypeVar('V')
 
 
+class PropertyMigration:
+    def __init__(self, source_schema: str, property: str, target_schema: str, replaced_by:str, effective_from: str, reason: str, type: str):
+        self.source_schema = source_schema
+        self.property = property
+        self.target_schema = target_schema
+        self.replaced_by = replaced_by
+        self.effective_from  = effective_from
+        self.reason = reason
+        self.type = type
+
 class LookupDefault(Enum):
     RAISE = 0
+
+def _get_path(d: Mapping[K, V], json_path: str):
+    jsonpath_expr = parse(json_path)
+    return [match.value for match in jsonpath_expr.find(d)]
 
 
 def lookup(d: Mapping[K, V], k: K, *ks: Iterable[K], default: Union[V, LookupDefault] = LookupDefault.RAISE) -> V:
@@ -63,3 +78,8 @@ def lookup(d: Mapping[K, V], k: K, *ks: Iterable[K], default: Union[V, LookupDef
                 raise
             else:
                 return default
+
+
+# def lookup2(d: Mapping[K, V], initial_key: K, property_migrations: List[PropertyMigration], default: Union[V, LookupDefault] = LookupDefault.RAISE) -> V:
+#
+#
