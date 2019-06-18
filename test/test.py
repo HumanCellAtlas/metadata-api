@@ -32,6 +32,7 @@ from humancellatlas.data.metadata.api import (AgeRange,
 from humancellatlas.data.metadata.helpers.dss import download_bundle_metadata, dss_client
 from humancellatlas.data.metadata.helpers.json import as_json
 from humancellatlas.data.metadata.helpers.schema_examples import download_example_bundle
+from humancellatlas.data.metadata.lookup import _get_path
 
 
 def setUpModule():
@@ -52,6 +53,24 @@ class TestAccessorApi(TestCase):
             if old_name in d:
                 d[new_name] = d[old_name]
                 del d[old_name]
+
+    def test_get_jsonpath(self):
+        test_donor: dict = {
+            "diseases": [
+                {
+                    "text": "some_disease"
+                },
+                {
+                    "text": "some_other_disease"
+                }
+            ]
+        }
+
+        diseases_path = "diseases.[*].text"
+        donor_diseases = _get_path(test_donor, diseases_path)
+        self.assertTrue(donor_diseases == ["some_disease", "some_other_disease"])
+
+
 
     def test_lymphocytes(self):
         self._test_example_bundle(directory='CD4+ cytotoxic T lymphocytes',
