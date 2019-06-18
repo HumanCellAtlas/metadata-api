@@ -1,7 +1,7 @@
 from typing import TypeVar, Mapping, Union, Iterable, List
 from enum import Enum
 from jsonpath_rw import parse
-from jsonpath_rw.jsonpath import Slice, Fields
+from jsonpath_rw.jsonpath import Slice, Fields, JSONPath
 
 K = TypeVar('K')
 V = TypeVar('V')
@@ -21,7 +21,7 @@ class LookupDefault(Enum):
     RAISE = 0
 
 
-def _is_multivalued(jsonpath_expr) -> bool:
+def _is_multivalued(jsonpath_expr: JSONPath) -> bool:
     if jsonpath_expr.__class__ == Slice:
         return True
     elif jsonpath_expr.__class__ == Fields:
