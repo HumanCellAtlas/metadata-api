@@ -1,6 +1,7 @@
 from typing import TypeVar, Mapping, Union, Iterable, List
 from enum import Enum
-from jsonpath_rw import jsonpath, parse
+from jsonpath_rw import parse
+from jsonpath_rw.jsonpath import Slice, Fields
 
 K = TypeVar('K')
 V = TypeVar('V')
@@ -19,9 +20,27 @@ class PropertyMigration:
 class LookupDefault(Enum):
     RAISE = 0
 
+
+def _is_multivalued(jsonpath_expr) -> bool:
+    if jsonpath_expr.__class__ == Slice:
+        return True
+    elif jsonpath_expr.__class__ == Fields:
+        return False
+    else:
+        return _is_multivalued(jsonpath_expr.left) or _is_multivalued(jsonpath_expr.right)
+
 def _get_path(d: Mapping[K, V], json_path: str):
     jsonpath_expr = parse(json_path)
-    return [match.value for match in jsonpath_expr.find(d)]
+
+    parsed_values = [match.value for match in jsonpath_expr.find(d)]
+
+    if not parsed_values:
+        raise KeyError()
+    else:
+        if _is_multivalued(jsonpath_expr):
+            return parsed_values
+        else:
+            return parsed_values[0]
 
 
 def lookup(d: Mapping[K, V], k: K, *ks: Iterable[K], default: Union[V, LookupDefault] = LookupDefault.RAISE) -> V:
@@ -66,11 +85,11 @@ def lookup(d: Mapping[K, V], k: K, *ks: Iterable[K], default: Union[V, LookupDef
     True
     """
     try:
-        return d[k]
+        return _get_path(d, k)
     except KeyError:
         for k in ks:
             try:
-                return d[k]
+                return _get_path(d, k)
             except KeyError:
                 pass
         else:

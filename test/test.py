@@ -63,12 +63,19 @@ class TestAccessorApi(TestCase):
                 {
                     "text": "some_other_disease"
                 }
-            ]
+            ],
+            "species": {
+                "taxon_id": "9606"
+            }
         }
 
         diseases_path = "diseases.[*].text"
         donor_diseases = _get_path(test_donor, diseases_path)
         self.assertTrue(donor_diseases == ["some_disease", "some_other_disease"])
+
+        taxon_id_path = "species.taxon_id"
+        taxon_id = _get_path(test_donor, taxon_id_path)
+        self.assertTrue(taxon_id == "9606")
 
 
 
