@@ -6,6 +6,7 @@ class PropertyMigrations:
         self.schema_api = schema_api
 
     # TODO: temporary lookup from data
+    # should use the rolando's lookup
     def _look_up(self, metadata_json, new_fq_key):
         split_key = new_fq_key.split(".")
         copy_metadata = metadata_json
