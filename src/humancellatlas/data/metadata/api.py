@@ -11,7 +11,7 @@ from humancellatlas.data.metadata.age_range import AgeRange
 
 # A few helpful type aliases
 #
-from humancellatlas.data.metadata.lookup import lookup, LookupDefault
+from humancellatlas.data.metadata.lookup import lookup, ontology_label
 
 UUID4 = UUID
 AnyJSON2 = Union[str, int, float, bool, None, Mapping[str, Any], List[Any]]
@@ -823,41 +823,3 @@ core_types = {
 }
 
 assert len(entity_types) == len(schema_names), "The mapping from schema name to entity type is not bijective"
-
-
-def ontology_label(ontology: Optional[Mapping[str, str]],
-                   default: Union[str, None, LookupDefault] = LookupDefault.RAISE) -> str:
-    """
-    Return the best-suited value from the given ontology dictionary.
-
-    >>> ontology_label({'ontology_label': '1', 'text': '2', 'ontology': '3'})
-    '1'
-
-    >>> ontology_label({'text': '2', 'ontology': '3'})
-    '2'
-
-    >>> ontology_label({'ontology': '3'})
-    '3'
-
-    >>> ontology_label({}, default=None)
-    >>> ontology_label({}, default='default')
-    'default'
-
-    >>> ontology_label(None, default=None)
-    >>> ontology_label(None, default='default')
-    'default'
-
-    >>> ontology_label({})
-    Traceback (most recent call last):
-    ...
-    KeyError: 'ontology_label'
-
-    >>> ontology_label(None)
-    Traceback (most recent call last):
-    ...
-    TypeError: 'NoneType' object is not subscriptable
-    """
-    if ontology is None and default is not LookupDefault.RAISE:
-        return default
-    else:
-        return lookup(ontology, 'ontology_label', 'text', 'ontology', default=default)

@@ -32,7 +32,7 @@ from humancellatlas.data.metadata.api import (AgeRange,
 from humancellatlas.data.metadata.helpers.dss import download_bundle_metadata, dss_client
 from humancellatlas.data.metadata.helpers.json import as_json
 from humancellatlas.data.metadata.helpers.schema_examples import download_example_bundle
-from humancellatlas.data.metadata.lookup import _get_path
+from humancellatlas.data.metadata.lookup import _get_path, ontology_label
 
 
 def setUpModule():
@@ -69,7 +69,7 @@ class TestAccessorApi(TestCase):
             }
         }
 
-        diseases_path = "diseases.[*].text"
+        diseases_path = "diseases.text"
         donor_diseases = _get_path(test_donor, diseases_path)
         self.assertTrue(donor_diseases == ["some_disease", "some_other_disease"])
 
@@ -78,6 +78,16 @@ class TestAccessorApi(TestCase):
         self.assertTrue(taxon_id == "9606")
 
 
+    def test_ontology_label(self):
+        ontology = {'text': 'foo', 'ontology': 'bar', 'ontology_label': 'baz',}
+        self.assertEqual(ontology_label(ontology), 'baz')
+        ontology = {'text': 'foo', 'ontology': 'bar',}
+        self.assertEqual(ontology_label(ontology), 'foo')
+        ontology = {'ontology': 'bar',}
+        self.assertEqual(ontology_label(ontology), 'bar')
+        self.assertEqual(ontology_label(None), None)
+        with self.assertRaises(AttributeError):
+            ontology_label({})
 
     def test_lymphocytes(self):
         self._test_example_bundle(directory='CD4+ cytotoxic T lymphocytes',
