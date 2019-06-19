@@ -1,7 +1,5 @@
 from typing import TypeVar, Mapping, Union, Iterable, List, Optional
 from enum import Enum
-from jsonpath_rw import parse
-from jsonpath_rw.jsonpath import Slice, Fields, JSONPath
 
 K = TypeVar('K')
 V = TypeVar('V')
@@ -21,26 +19,69 @@ class LookupDefault(Enum):
     RAISE = 0
 
 
-def _is_multivalued(jsonpath_expr: JSONPath) -> bool:
-    if jsonpath_expr.__class__ == Slice:
-        return True
-    elif jsonpath_expr.__class__ == Fields:
-        return False
-    else:
-        return _is_multivalued(jsonpath_expr.left) or _is_multivalued(jsonpath_expr.right)
-
 def _get_path(d: Mapping[K, V], json_path: str):
-    jsonpath_expr = parse(json_path)
+    """
+    Get the value in the mapping for the JSON path.
 
-    parsed_values = [match.value for match in jsonpath_expr.find(d)]
+    Note that {"key": ["value"]} and [{"key": "value"}] have the same path.
 
-    if not parsed_values:
-        raise KeyError()
+    :param d: The JSON object to inspect
+    :param json_path: keys.separated.by.dots
+    >>> _get_path({'a': {'b': {'c': 'd'}}}, 'a.b.c')
+    'd'
+    >>> _get_path({'a': {'b': {'c': ['d']}}}, 'a.b.c')
+    ['d']
+    >>> _get_path({'a': {'b': [{'c': 'd'}]}}, 'a.b.c')
+    'd'
+    >>> _get_path({'a': {'b': [{'c': 'd'}, {'c': 'e'}]}}, 'a.b.c')
+    ['d', 'e']
+    >>> _get_path({'a': {'b': [{'c': ['d']}, {'c': 'e'}]}}, 'a.b.c')
+    [['d'], 'e']
+    >>> _get_path({'a': [{'b': [{'c': 'd'}, {'c': 'e'}]}, {'b': {'c': 'f'}}]}, 'a.b.c')
+    ['d', 'e', 'f']
+    >>> _get_path({'a': {'b': {'X': 'd'}}}, 'a.b.c')
+    Traceback (most recent call last):
+        ...
+    KeyError: 'c'
+    >>> _get_path({'a': {'b': [{'c': 'd'}, {'X': 'e'}]}}, 'a.b.c')
+    Traceback (most recent call last):
+        ...
+    KeyError: 'c'
+    >>> _get_path({'a': [{'b': [{'c': 'd'}, {'c': 'e'}]}, {'b': {'X': 'f'}}]}, 'a.b.c')
+    Traceback (most recent call last):
+        ...
+    KeyError: 'c'
+    """
+    matches = _recursive_get_path([d], json_path.split('.'))
+    if len(matches) == 1:
+        return matches[0]
     else:
-        if _is_multivalued(jsonpath_expr):
-            return parsed_values
-        else:
-            return parsed_values[0]
+        return matches
+
+
+def split_path(path):
+    return path[0], path[1:]
+
+
+def _recursive_get_path(matching_objs: Iterable[Mapping[K, V]], unmatched_path: List[str]):
+    if len(unmatched_path) == 0:
+        return matching_objs
+    else:
+        head, tail = split_path(unmatched_path)
+        matches = []
+        for obj in matching_objs:
+            if type(obj) == dict:
+                matches.append(obj[head])
+            elif type(obj) == list:
+                for sub_obj in obj:
+                    if type(sub_obj) == dict:
+                        matches.append(sub_obj[head])
+                    else:
+                        raise KeyError(f'Cannot match key: {head} in object: {sub_obj} of type: {type(sub_obj)}')
+            else:
+                raise KeyError(f'Cannot match key: {head} in object: {obj} of type: {type(obj)}')
+        assert len(matches) > 0
+        return _recursive_get_path(matches, tail)
 
 
 def lookup(d: Mapping[K, V], k: K, *ks: Iterable[K], default: Union[V, LookupDefault] = LookupDefault.RAISE) -> V:
@@ -53,35 +94,35 @@ def lookup(d: Mapping[K, V], k: K, *ks: Iterable[K], default: Union[V, LookupDef
     default is `None`. This function does not have a default default.
 
     If the first key is present, return its value ...
-    >>> lookup({1:2}, 1)
-    2
+    >>> lookup({'a': 'b'}, 'a')
+    'b'
 
     ... and ignore the other keys.
-    >>> lookup({1:2}, 1, 3)
-    2
+    >>> lookup({'a': 'b'}, 'a', 'X')
+    'b'
 
     If the first key is absent, try the fallbacks.
-    >>> lookup({1:2}, 3, 1)
-    2
+    >>> lookup({'a': 'b'}, 'X', 'a')
+    'b'
 
     If the key isn't present, raise a KeyError referring to that key.
-    >>> lookup({1:2}, 3)
+    >>> lookup({'a': 'b'}, 'X')
     Traceback (most recent call last):
     ...
-    KeyError: 3
+    KeyError: 'X'
 
     If neither the first key nor the fallbacks are present, raise a KeyError referring to the first key.
-    >>> lookup({1:2}, 3, 4)
+    >>> lookup({'a': 'b'}, 'X', 'Y')
     Traceback (most recent call last):
     ...
-    KeyError: 3
+    KeyError: 'X'
 
     If the key isn't present but a default was passed, return the default.
-    >>> lookup({1:2}, 3, default=4)
-    4
+    >>> lookup({'a': 'b'}, 'X', default='c')
+    'c'
 
     None is a valid default.
-    >>> lookup({1:2}, 3, 4, default=None) is None
+    >>> lookup({'a': 'b'}, 'X', default=None) is None
     True
     """
     k = k.split('.', 1)[1]

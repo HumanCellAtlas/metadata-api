@@ -69,7 +69,7 @@ class TestAccessorApi(TestCase):
             }
         }
 
-        diseases_path = "diseases.[*].text"
+        diseases_path = "diseases.text"
         donor_diseases = _get_path(test_donor, diseases_path)
         self.assertTrue(donor_diseases == ["some_disease", "some_other_disease"])
 
