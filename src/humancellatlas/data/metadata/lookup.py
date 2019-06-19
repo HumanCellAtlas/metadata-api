@@ -1,4 +1,4 @@
-from typing import TypeVar, Mapping, Union, Iterable, List
+from typing import TypeVar, Mapping, Union, Iterable, List, Optional
 from enum import Enum
 from jsonpath_rw import parse
 from jsonpath_rw.jsonpath import Slice, Fields, JSONPath
@@ -103,3 +103,27 @@ def lookup(d: Mapping[K, V], k: K, *ks: Iterable[K], default: Union[V, LookupDef
 # def lookup2(d: Mapping[K, V], initial_key: K, property_migrations: List[PropertyMigration], default: Union[V, LookupDefault] = LookupDefault.RAISE) -> V:
 #
 #
+
+def ontology_label(ontology: Optional[Mapping[str, str]]) -> str:
+    if ontology is None:
+        return None
+    try:
+        value = _get_path(ontology, 'ontology_label')
+    except KeyError:
+        pass
+    else:
+        return value
+    try:
+        value = _get_path(ontology, 'text')
+    except KeyError:
+        pass
+    else:
+        return value
+    try:
+        value = _get_path(ontology, 'ontology')
+    except KeyError:
+        pass
+    else:
+        return value
+    raise KeyError()
+
