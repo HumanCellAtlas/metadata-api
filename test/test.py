@@ -86,7 +86,7 @@ class TestAccessorApi(TestCase):
         ontology = {'ontology': 'bar',}
         self.assertEqual(ontology_label(ontology), 'bar')
         self.assertEqual(ontology_label(None), None)
-        with self.assertRaises(KeyError):
+        with self.assertRaises(AttributeError):
             ontology_label({})
 
     def test_lymphocytes(self):

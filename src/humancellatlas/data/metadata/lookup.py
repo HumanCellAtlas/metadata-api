@@ -146,25 +146,31 @@ def lookup(d: Mapping[K, V], k: K, *ks: Iterable[K], default: Union[V, LookupDef
 #
 
 def ontology_label(ontology: Optional[Mapping[str, str]]) -> str:
+    """
+    Return the best-suited value from the given ontology dictionary.
+
+    If the preferred key is present, return its value ...
+    >>> ontology_label({'ontology_label': 'a', 'text': 'b', 'ontology': 'c'})
+    'a'
+
+    If the preferred key is not present, return the next preferred ...
+    >>> ontology_label({'text': 'b', 'ontology': 'c'})
+    'b'
+
+    If no preferred key is present, raise an AttributeError
+    >>> ontology_label({'description': 'z'})
+    Traceback (most recent call last):
+    ...
+    AttributeError: ontology label not found
+
+    If given None, return None
+    >>> ontology_label(None)
+    None
+    """
     if ontology is None:
         return None
-    try:
-        value = _get_path(ontology, 'ontology_label')
-    except KeyError:
-        pass
-    else:
-        return value
-    try:
-        value = _get_path(ontology, 'text')
-    except KeyError:
-        pass
-    else:
-        return value
-    try:
-        value = _get_path(ontology, 'ontology')
-    except KeyError:
-        pass
-    else:
-        return value
-    raise KeyError()
+    for field in ['ontology_label', 'text', 'ontology']:
+        if field in ontology:
+            return ontology.get(field)
+    raise AttributeError('ontology label not found')
 
