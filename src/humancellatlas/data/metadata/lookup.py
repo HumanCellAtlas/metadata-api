@@ -84,6 +84,7 @@ def lookup(d: Mapping[K, V], k: K, *ks: Iterable[K], default: Union[V, LookupDef
     >>> lookup({1:2}, 3, 4, default=None) is None
     True
     """
+    k = k.split('.', 1)[1]
     try:
         return _get_path(d, k)
     except KeyError:
