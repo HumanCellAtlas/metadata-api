@@ -63,3 +63,7 @@ def lookup(d: Mapping[K, V], k: K, *ks: K, default: Union[V, LookupDefault] = Lo
                 raise
             else:
                 return default
+
+
+
+def lookup_from_property_migrations:
