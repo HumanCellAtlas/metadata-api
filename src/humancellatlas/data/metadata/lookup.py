@@ -1,19 +1,12 @@
 from typing import TypeVar, Mapping, Union, Iterable, List, Optional
 from enum import Enum
 
+from ingest.template.schema_template import SchemaTemplate, UnknownKeyException
+
 K = TypeVar('K')
 V = TypeVar('V')
 
-
-class PropertyMigration:
-    def __init__(self, source_schema: str, property: str, target_schema: str, replaced_by:str, effective_from: str, reason: str, type: str):
-        self.source_schema = source_schema
-        self.property = property
-        self.target_schema = target_schema
-        self.replaced_by = replaced_by
-        self.effective_from  = effective_from
-        self.reason = reason
-        self.type = type
+schema_template = SchemaTemplate()
 
 class LookupDefault(Enum):
     RAISE = 0
@@ -62,6 +55,25 @@ def _get_path(d: Mapping[K, V], json_path: str):
 def split_path(path):
     return path[0], path[1:]
 
+def resolve_local_property(doc, property, context, version, default: Union[V, LookupDefault] = LookupDefault.RAISE):
+    """
+    use this to resolve a property name given a context and a schema version
+    :param property: a single property from a schema e.g. "title"
+    :param context: the fully qualified context e.g. 'project.publications.title'
+    :param version: the schema version that you trying to resolve to
+    :return: 
+    """
+
+    fq_key = context + "." + property
+    new_k = schema_template.replaced_by_at(fq_key, version)
+    property = new_k.split(".")[-1]
+    try:
+        return _get_path(doc, property)
+    except KeyError:
+        if default is LookupDefault.RAISE:
+            raise
+        else:
+            return default
 
 def _recursive_get_path(matching_objs: Iterable[Mapping[K, V]], unmatched_path: List[str]):
     if len(unmatched_path) == 0:
@@ -82,6 +94,11 @@ def _recursive_get_path(matching_objs: Iterable[Mapping[K, V]], unmatched_path: 
                 raise KeyError(f'Cannot match key: {head} in object: {obj} of type: {type(obj)}')
         assert len(matches) > 0
         return _recursive_get_path(matches, tail)
+
+def get_document_version(metadata_json):
+    if 'schema_version' in metadata_json:
+        return metadata_json['schema_version']
+    return metadata_json['describedBy'].split("/")[-2]
 
 
 def lookup(d: Mapping[K, V], k: K, *ks: Iterable[K], default: Union[V, LookupDefault] = LookupDefault.RAISE) -> V:
@@ -125,7 +142,14 @@ def lookup(d: Mapping[K, V], k: K, *ks: Iterable[K], default: Union[V, LookupDef
     >>> lookup({'a': 'b'}, 'X', default=None) is None
     True
     """
-    k = k.split('.', 1)[1]
+
+    version = get_document_version(d)
+    new_k = schema_template.replaced_by_at(k, version)
+
+    if (new_k != k):
+        print('Warn: ' +k+ ' was migrated to ' + new_k )
+
+    k = new_k.split('.', 1)[1] # remove the schema name
     try:
         return _get_path(d, k)
     except KeyError:
@@ -140,10 +164,6 @@ def lookup(d: Mapping[K, V], k: K, *ks: Iterable[K], default: Union[V, LookupDef
             else:
                 return default
 
-
-# def lookup2(d: Mapping[K, V], initial_key: K, property_migrations: List[PropertyMigration], default: Union[V, LookupDefault] = LookupDefault.RAISE) -> V:
-#
-#
 
 def ontology_label(ontology: Optional[Mapping[str, str]]) -> str:
     """
@@ -174,3 +194,6 @@ def ontology_label(ontology: Optional[Mapping[str, str]]) -> str:
             return ontology.get(field)
     raise AttributeError('ontology label not found')
 
+def get_schema_name(d):
+    schema = _get_path(d, "describedBy")
+    return schema.split("/")[-1]

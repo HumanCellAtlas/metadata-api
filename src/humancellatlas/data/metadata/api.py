@@ -11,7 +11,7 @@ from humancellatlas.data.metadata.age_range import AgeRange
 
 # A few helpful type aliases
 #
-from humancellatlas.data.metadata.lookup import lookup, ontology_label
+from humancellatlas.data.metadata.lookup import lookup, ontology_label, resolve_local_property, get_document_version, get_schema_name
 
 UUID4 = UUID
 AnyJSON2 = Union[str, int, float, bool, None, Mapping[str, Any], List[Any]]
@@ -121,6 +121,12 @@ class ProjectPublication:
         url = lookup(json, 'project.url')
         return cls(title=title, url=url)
 
+    @classmethod
+    def from_json_version(cls, json: JSON, version) -> 'ProjectPublication':
+        title = resolve_local_property(json, 'title', 'project.publications', version)
+        url = resolve_local_property(json, 'url', 'project.publications', version)
+        return cls(title=title, url=url)
+
     @property
     def publication_title(self):
         warnings.warn(f"ProjectPublication.publication_title is deprecated. "
@@ -152,6 +158,16 @@ class ProjectContact:
                    corresponding_contributor=lookup(json, 'project.contributors.corresponding_contributor'),
                    project_role=ontology_label(lookup(json, 'project.contributors.project_role', default=None)))
 
+    @classmethod
+    def from_json_version(cls, json: JSON, version) -> 'ProjectContact':
+        return cls(name=resolve_local_property(json, 'contact_name', 'project.contributors', version, default=None),
+                   email=resolve_local_property(json, 'email', 'project.contributors', version, default=None),
+                   institution=resolve_local_property(json, 'institution', 'project.contributors', version, default=None),
+                   laboratory=resolve_local_property(json, 'laboratory', 'project.contributors', version, default=None),
+                   corresponding_contributor=resolve_local_property(json, 'corresponding_contributor', 'project.contributors', version, default=None),
+                   project_role=ontology_label(resolve_local_property(json, 'project_role', 'project.contributors', version, default=None)))
+
+
     @property
     def contact_name(self) -> str:
         warnings.warn(f"ProjectContact.contact_name is deprecated. "
@@ -173,17 +189,23 @@ class Project(Entity):
 
     def __init__(self, json: JSON) -> None:
         super().__init__(json)
+
+        version = get_document_version(json)
+
         self.project_short_name = lookup(json, 'project.project_core.project_short_name')
         self.project_title = lookup(json, 'project.project_core.project_title')
         self.project_description = lookup(json, 'project.project_core.project_description')
-        self.publications = set(ProjectPublication.from_json(publication)
+
+        self.publications = set(ProjectPublication.from_json_version(publication, version)
                                 for publication in lookup(json, 'project.publications'))
-        self.contributors = {ProjectContact.from_json(contributor)
+
+        self.contributors = {ProjectContact.from_json_version(contributor, version)
                              for contributor in lookup(json, 'project.contributors')}
-        self.insdc_project_accessions = set(lookup(json, 'project.insdc_project_accessions'))
-        self.geo_series_accessions = set(lookup(json, 'project.geo_series_accessions'))
-        self.array_express_accessions = set(lookup(json, 'project.array_express_accessions'))
-        self.insdc_study_accessions = set(lookup(json, 'project.insdc_study_accessions'))
+
+        self.insdc_project_accessions = set(lookup(json, 'project.insdc_project_accessions', default=""))
+        self.geo_series_accessions = set(lookup(json, 'project.geo_series_accessions', default=""))
+        self.array_express_accessions = set(lookup(json, 'project.array_express_accessions', default=""))
+        self.insdc_study_accessions = set(lookup(json, 'project.insdc_study_accessions', default=""))
 
     @property
     def laboratory_names(self) -> set:
@@ -208,9 +230,11 @@ class Biomaterial(LinkedEntity):
 
     def __init__(self, json: JSON) -> None:
         super().__init__(json)
-        self.biomaterial_id = lookup(json, 'biomaterial.biomaterial_core.biomaterial_id')
-        self.ncbi_taxon_id = lookup(json, 'biomaterial.biomaterial_core.ncbi_taxon_id')
-        self.has_input_biomaterial = lookup(json, 'biomaterial.biomaterial_core.has_input_biomaterial')
+
+        schema_name = get_schema_name(json)
+        self.biomaterial_id = lookup(json, schema_name+'.biomaterial_core.biomaterial_id')
+        self.ncbi_taxon_id = lookup(json, schema_name+'.biomaterial_core.ncbi_taxon_id')
+        self.has_input_biomaterial = lookup(json, schema_name+'.biomaterial_core.has_input_biomaterial', default=None)
         self.from_processes = {}
         self.to_processes = {}
 
@@ -234,12 +258,11 @@ class DonorOrganism(Biomaterial):
 
     def __init__(self, json: JSON):
         super().__init__(json)
-        content = json.get('content', json)
-        self.genus_species = {ontology_label(gs) for gs in lookup(json, 'donor_from_organism.genus_species')}
-        self.diseases = {ontology_label(d) for d in lookup(json, 'donor_from_organism.diseases')}
-        self.organism_age = lookup(json, 'donor_from_organism.organism_age')
-        self.organism_age_unit = ontology_label(lookup(json, 'donor_from_organism.organism_age_unit'))
-        self.sex = ontology_label(lookup(json, 'donor_from_organism.sex'))
+        self.genus_species = {ontology_label(gs) for gs in lookup(json, 'donor_organism.genus_species')}
+        self.diseases = {ontology_label(d) for d in lookup(json, 'donor_organism.diseases')}
+        self.organism_age = lookup(json, 'donor_organism.organism_age')
+        self.organism_age_unit = ontology_label(lookup(json, 'donor_organism.organism_age_unit'))
+        self.sex = lookup(json, 'donor_organism.sex')
 
     @property
     def organism_age_in_seconds(self) -> Optional[AgeRange]:
@@ -271,14 +294,15 @@ class SpecimenFromOrganism(Biomaterial):
 
     def __init__(self, json: JSON):
         super().__init__(json)
-        self.storage_method = lookup(json, 'specimen_from_organism.preservation_storage.storage_method')
+        self.storage_method = lookup(json, 'specimen_from_organism.preservation_storage.storage_method', default=None)
         self.preservation_method = lookup(
             json,
             'specimen_from_organism.preservation_storage.storage_method.preservation_method'
+            , default=None
         )
-        self.diseases = {ontology_label(d) for d in lookup(json, 'specimen_from_organism.diseases')}
+        self.diseases = {ontology_label(d) for d in lookup(json, 'specimen_from_organism.diseases', default=None)}
         self.organ = ontology_label(lookup(json, 'specimen_from_organism.organ', default=None))
-        self.organ_parts = {ontology_label(d) for d in lookup(json, 'specimen_from_organism.organ_parts')}
+        self.organ_parts = {ontology_label(d) for d in lookup(json, 'specimen_from_organism.organ_parts', default=[])}
 
     @property
     def disease(self):
@@ -312,7 +336,7 @@ class CellSuspension(Biomaterial):
         super().__init__(json)
         self.estimated_cell_count = lookup(json, 'cell_suspension.estimated_cell_count')
         self.selected_cell_types = {ontology_label(sct) for sct in
-                                    lookup(json, 'cell_suspension.selected_cell_types')}
+                                    lookup(json, 'cell_suspension.selected_cell_types', default=[])}
 
     @property
     def total_estimated_cells(self) -> int:
@@ -369,8 +393,9 @@ class Process(LinkedEntity):
 
     def __init__(self, json: JSON) -> None:
         super().__init__(json)
-        self.process_id = lookup(json, 'process.process_core.process_id')
-        self.process_name = lookup(json, 'process.process_core.process_name')
+        schema_name = get_schema_name(json)
+        self.process_id = lookup(json, schema_name+'.process_core.process_id')
+        self.process_name = lookup(json, schema_name+'.process.process_core.process_name', default=None)
         self.input_biomaterials = {}
         self.input_files = {}
         self.output_biomaterials = {}
@@ -457,8 +482,9 @@ class Protocol(LinkedEntity):
 
     def __init__(self, json: JSON) -> None:
         super().__init__(json)
-        self.protocol_id = lookup(json, 'protocol.protocol_core.protocol_id')
-        self.protocol_name = lookup(json, 'protocol.protocol_core.protocol_name')
+        schema_name = get_schema_name(json)
+        self.protocol_id = lookup(json, schema_name+'.protocol_core.protocol_id')
+        self.protocol_name = lookup(json, schema_name+'.protocol_core.protocol_name', default=None)
 
     def _connect_to(self, other: Entity, forward: bool) -> None:
         if isinstance(other, Process) and not forward:
@@ -575,8 +601,12 @@ class File(LinkedEntity):
 
     def __init__(self, json: JSON, manifest: Mapping[str, ManifestEntry]):
         super().__init__(json)
-        self.format = lookup(json, 'file.file_core.format')
-        self.manifest_entry = lookup(manifest, 'file.file_core.file_name')
+        schema_name = get_schema_name(json)
+        content = json.get('content', json)
+        core = content['file_core']
+        self.format = lookup(json, schema_name+'.file_core.format')
+        self.manifest_entry = manifest[core['file_name']]
+
         self.from_processes = {}
         self.to_processes = {}
 
@@ -603,8 +633,8 @@ class SequenceFile(File):
 
     def __init__(self, json: JSON, manifest: Mapping[str, ManifestEntry]):
         super().__init__(json, manifest)
-        self.read_index = lookup(json, 'sequence_file.read_index')
-        self.lane_index = lookup(json, 'sequence_file.lane_index')
+        self.read_index = lookup(json, 'sequence_file.read_index', default=None)
+        self.lane_index = lookup(json, 'sequence_file.lane_index', default=None)
 
 
 @dataclass(init=False)
@@ -659,7 +689,7 @@ class Link:
                 yield cls(source_id=process_id,
                           source_type='process',
                           destination_id=UUID4(protocol['protocol_id']),
-                          destination_type=lookup(protocol, 'protocol.type'))
+                          destination_type=protocol['protocol_type'])
 
 
 @dataclass(init=False)
