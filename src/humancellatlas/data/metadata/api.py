@@ -197,7 +197,7 @@ class Project(Entity):
         self.project_description = lookup(json, 'project.project_core.project_description')
 
         self.publications = set(ProjectPublication.from_json_version(publication, version)
-                                for publication in lookup(json, 'project.publications'))
+                                for publication in lookup(json, 'project.publications', default=""))
 
         self.contributors = {ProjectContact.from_json_version(contributor, version)
                              for contributor in lookup(json, 'project.contributors')}
