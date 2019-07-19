@@ -110,51 +110,74 @@ def lookup(d: Mapping[K, V], k: K, *ks: Iterable[K], default: Union[V, LookupDef
     that argument instead of raising an KeyError in that case. This is notably different to dict.get() whose default
     default is `None`. This function does not have a default default.
 
+    :param d: a dict
+    :param k: a fully qualified key to lookup in the dict eg. 'publications.title'
+    :param ks: optional additional fully qualified key(s) to try if the first key is not found
+    :param default: a value to return if no key is found in the dict
+    :return: the value that was found in dict d, or if not found either the default is returned or a KeyError is raised
+
     If the first key is present, return its value ...
-    >>> lookup({'a': 'b'}, 'a')
+    >>> lookup({'a': 'b'}, 'schema.a')
     'b'
 
     ... and ignore the other keys.
-    >>> lookup({'a': 'b'}, 'a', 'X')
+    >>> lookup({'a': 'b'}, 'schema.a', 'schema.X')
     'b'
 
     If the first key is absent, try the fallbacks.
-    >>> lookup({'a': 'b'}, 'X', 'a')
+    >>> lookup({'a': 'b'}, 'schema.X', 'schema.a')
     'b'
 
     If the key isn't present, raise a KeyError referring to that key.
-    >>> lookup({'a': 'b'}, 'X')
+    >>> lookup({'a': 'b'}, 'schema.X')
     Traceback (most recent call last):
     ...
     KeyError: 'X'
 
     If neither the first key nor the fallbacks are present, raise a KeyError referring to the first key.
-    >>> lookup({'a': 'b'}, 'X', 'Y')
+    >>> lookup({'a': 'b'}, 'schema.X', 'schema.Y')
     Traceback (most recent call last):
     ...
     KeyError: 'X'
 
     If the key isn't present but a default was passed, return the default.
-    >>> lookup({'a': 'b'}, 'X', default='c')
+    >>> lookup({'a': 'b'}, 'schema.X', default='c')
     'c'
 
     None is a valid default.
-    >>> lookup({'a': 'b'}, 'X', default=None) is None
+    >>> lookup({'a': 'b'}, 'schema.X', default=None) is None
     True
     """
 
-    version = get_document_version(d)
-    new_k = schema_template.replaced_by_at(k, version)
+    if 'schema_version' in d or 'describedBy' in d:
+        version = get_document_version(d)
+        new_k = schema_template.replaced_by_at(k, version)
+    else:
+        version = '0.0.0'
+        new_k = k
+
+    # HACK for missing entries in https://schema.dev.data.humancellatlas.org/property_migrations
+    split_version = [int(x) for x in version.split('.')]
+    if new_k == 'donor_organism.biological_sex' and split_version >= [10, 0, 0]:
+        new_k = 'donor_organism.sex'
+    if new_k == 'donor_organism.disease' and split_version >= [10, 1, 0]:
+        new_k = 'donor_organism.diseases'
+    if new_k == 'specimen_from_organism.disease' and split_version >= [6, 3, 0]:
+        new_k = 'specimen_from_organism.diseases'
+    if new_k == 'project.project_core.project_shortname' and split_version >= [7, 0, 0]:
+        new_k = 'project.project_core.project_short_name'
 
     if (new_k != k):
         print('Warn: ' +k+ ' was migrated to ' + new_k )
 
     k = new_k.split('.', 1)[1] # remove the schema name
+
     try:
         return _get_path(d, k)
     except KeyError:
         for k in ks:
             try:
+                k = k.split('.', 1)[1]
                 return _get_path(d, k)
             except KeyError:
                 pass
@@ -184,11 +207,13 @@ def ontology_label(ontology: Optional[Mapping[str, str]]) -> str:
     AttributeError: ontology label not found
 
     If given None, return None
-    >>> ontology_label(None)
-    None
+    >>> ontology_label(None) is None
+    True
     """
     if ontology is None:
         return None
+    if isinstance(ontology, str):
+        return ontology
     for field in ['ontology_label', 'text', 'ontology']:
         if field in ontology:
             return ontology.get(field)

@@ -336,7 +336,7 @@
                         "barcode_length": 16,
                         "barcode_read": "Read 1"
                     },
-                    "library_construction_approach": "Smart-seq2",
+                    "library_construction_method": "Smart-seq2",
                     "schema_type": "process",
                     "end_bias": "full length",
                     "primer": "poly-dT",

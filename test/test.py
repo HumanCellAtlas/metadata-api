@@ -47,12 +47,12 @@ class TestAccessorApi(TestCase):
         # Suppress `sys:1: ResourceWarning: unclosed <ssl.SSLSocket fd=6, family=AddressFamily.AF_INET, ...`
         warnings.simplefilter("ignore", ResourceWarning)
 
-    def _rename_keys(self, d, **kwargs):
-        for new_name, old_name in kwargs.items():
-            assert new_name != old_name
-            if old_name in d:
-                d[new_name] = d[old_name]
-                del d[old_name]
+    # def _rename_keys(self, d, **kwargs):
+    #     for new_name, old_name in kwargs.items():
+    #         assert new_name != old_name
+    #         if old_name in d:
+    #             d[new_name] = d[old_name]
+    #             del d[old_name]
 
     def test_get_jsonpath(self):
         test_donor: dict = {
@@ -617,13 +617,13 @@ class TestAccessorApi(TestCase):
 
         assert_bundle()
 
-        for publication in metadata_files['project_0.json']['publications']:
-            self._rename_keys(publication, title='publication_title', url='publication_url')
-        for contributor in metadata_files['project_0.json']['contributors']:
-            if 'project_role' in contributor:
-                contributor['project_role'] = dict(text=contributor['project_role'])
-
-        assert_bundle()
+        # for publication in metadata_files['project_0.json']['publications']:
+        #     self._rename_keys(publication, title='publication_title', url='publication_url')
+        # for contributor in metadata_files['project_0.json']['contributors']:
+        #     if 'project_role' in contributor:
+        #         contributor['project_role'] = dict(text=contributor['project_role'])
+        #
+        # assert_bundle()
 
     def test_project_contact(self):
         uuid = '6b498499-c5b4-452f-9ff9-2318dbb86000'
@@ -647,10 +647,10 @@ class TestAccessorApi(TestCase):
 
         assert_bundle()
 
-        for contributor in metadata_files['project_0.json']['contributors']:
-            self._rename_keys(contributor, name='contact_name')
-
-        assert_bundle()
+        # for contributor in metadata_files['project_0.json']['contributors']:
+        #     self._rename_keys(contributor, name='contact_name')
+        #
+        # assert_bundle()
 
     def test_file_format(self):
         uuid = '6b498499-c5b4-452f-9ff9-2318dbb86000'
@@ -670,11 +670,11 @@ class TestAccessorApi(TestCase):
 
         assert_bundle()
 
-        for file_name, file_content in metadata_files.items():
-            if file_name.startswith('sequence_file_') or file_name.startswith('supplementary_file_'):
-                self._rename_keys(file_content['file_core'], format='file_format')
-
-        assert_bundle()
+        # for file_name, file_content in metadata_files.items():
+        #     if file_name.startswith('sequence_file_') or file_name.startswith('supplementary_file_'):
+        #         self._rename_keys(file_content['file_core'], format='file_format')
+        #
+        # assert_bundle()
 
     def test_link_destination_type(self):
         uuid = '6b498499-c5b4-452f-9ff9-2318dbb86000'
@@ -698,11 +698,11 @@ class TestAccessorApi(TestCase):
 
         assert_bundle()
 
-        for link in metadata_files['links.json']['links']:
-            for protocol in link['protocols']:
-                self._rename_keys(protocol, type='protocol_type')
-
-        assert_bundle()
+        # for link in metadata_files['links.json']['links']:
+        #     for protocol in link['protocols']:
+        #         self._rename_keys(protocol, type='protocol_type')
+        #
+        # assert_bundle()
 
 
 # noinspection PyUnusedLocal
