@@ -1,7 +1,7 @@
 from typing import TypeVar, Mapping, Union, Iterable, List, Optional
 from enum import Enum
 
-from ingest.template.schema_template import SchemaTemplate, UnknownKeyException
+from ingest.template.schema_template import SchemaTemplate
 
 K = TypeVar('K')
 V = TypeVar('V')

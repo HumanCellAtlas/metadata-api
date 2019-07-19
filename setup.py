@@ -5,7 +5,8 @@ setup(
     version="1.0b20.dev1",
     license='MIT',
     install_requires=[
-        'dataclasses >= 0.6', 'hca-ingest >= 0.6.7', 'jsonpath-rw'
+        'dataclasses >= 0.6',
+        'hca-ingest @ git+https://github.com/HumanCellAtlas/ingest-client.git@7b654a02de4849d69c92512ee542cd9b07361bcf#egg=hca-ingest'
     ],
     # Not using tests_require because that installs the test requirements into .eggs, not the virtualenv
     extras_require={
