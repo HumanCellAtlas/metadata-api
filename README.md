@@ -16,6 +16,7 @@ Version 1.0 will be on PyPI but until then we need to install from GitHub:
 ```
 virtualenv -p python3 foo
 source foo/bin/activate
+pip install -U setuptools>=40.1.0
 pip install "git+git://github.com/HumanCellAtlas/metadata-api@master#egg=hca-metadata-api[dss]"
 ```
 
