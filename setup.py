@@ -11,7 +11,8 @@ setup(
     extras_require={
         "dss": [
             'hca == 5.2.0',
-            'urllib3 >= 1.23'
+            'urllib3 >= 1.23',
+            'requests >= 2.19.1'
         ],
         "examples": [
             'jupyter >= 1.0.0'
