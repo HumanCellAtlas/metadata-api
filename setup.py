@@ -2,7 +2,7 @@ from setuptools import setup, find_namespace_packages
 
 setup(
     name="hca-metadata-api",
-    version="1.0b19",
+    version="1.0b20",
     license='MIT',
     install_requires=[
         'dataclasses >= 0.6'
@@ -11,7 +11,8 @@ setup(
     extras_require={
         "dss": [
             'hca == 5.2.0',
-            'urllib3 >= 1.23'
+            'urllib3 >= 1.23',
+            'requests >= 2.19.1'
         ],
         "examples": [
             'jupyter >= 1.0.0'
