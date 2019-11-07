@@ -22,11 +22,22 @@ JSON = Mapping[str, AnyJSON]
 
 @dataclass(init=False)
 class Entity:
+    """
+    Class defining a basic Entity
+    """
+
     json: JSON = field(repr=False)
     document_id: UUID4
 
     @classmethod
     def from_json(cls, json: JSON, **kwargs):
+        """
+        Entity class constructor
+
+        :param json: JSON dict containing 'content' key
+        :param \*\*kwargs: Additional keyword arguments passed to sub class constructor
+        """
+
         content = json.get('content', json)
         described_by = content['describedBy']
         schema_name = described_by.rpartition('/')[2]
@@ -37,6 +48,12 @@ class Entity:
         return sub_cls(json, **kwargs)
 
     def __init__(self, json: JSON) -> None:
+        """
+        Entity class constructor
+
+        :param json: JSON dict containing 'hca_ingest' or 'provenance' key
+        """
+
         super().__init__()
         self.json = json
         provenance = json.get('hca_ingest') or json['provenance']
@@ -48,6 +65,10 @@ class Entity:
 
     @property
     def schema_name(self):
+        """
+        Schema name associated with the class of this instance
+        """
+
         return schema_names[type(self)]
 
     def accept(self, visitor: 'EntityVisitor') -> None:
@@ -60,12 +81,18 @@ E = TypeVar('E', bound=Entity)
 
 
 class TypeLookupError(Exception):
+    """
+    Exception raised when no entity type defined for a given schema name
+    """
 
     def __init__(self, described_by: str) -> None:
         super().__init__(f"No entity type for schema URL '{described_by}'")
 
 
 class EntityVisitor(ABC):
+    """
+    The base visitor class
+    """
 
     @abstractmethod
     def visit(self, entity: 'Entity') -> None:
@@ -74,6 +101,9 @@ class EntityVisitor(ABC):
 
 @dataclass(init=False)
 class LinkedEntity(Entity, ABC):
+    """
+    An Entity that can be linked to other LinkedEntity objects as nodes in a tree.
+    """
     children: MutableMapping[UUID4, Entity] = field(repr=False)
     parents: MutableMapping[UUID4, 'LinkedEntity'] = field(repr=False)
 
@@ -82,27 +112,55 @@ class LinkedEntity(Entity, ABC):
         raise NotImplementedError()
 
     def __init__(self, json: JSON) -> None:
+        """
+        LinkedEntity constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         self.children = {}
         self.parents = {}
 
     def connect_to(self, other: Entity, forward: bool) -> None:
+        """
+        Create a relationship between this Entity and another as a parent or child
+
+        :param other: Entity to connect with
+        :param forward: True if input into other, False if output from other
+        """
+
         mapping = self.children if forward else self.parents
         mapping[other.document_id] = other
         self._connect_to(other, forward)
 
     def ancestors(self, visitor: EntityVisitor):
+        """
+        Traverse up the graph to visit all parents
+
+        :param visitor:
+        """
+
         for parent in self.parents.values():
             parent.ancestors(visitor)
             visitor.visit(parent)
 
     def accept(self, visitor: EntityVisitor):
+        """
+        Traverse down the graph to accept all children
+
+        :param visitor:
+        """
+
         super().accept(visitor)
         for child in self.children.values():
             child.accept(visitor)
 
 
 class LinkError(RuntimeError):
+    """
+    Exception raised when two Entities cannot be linked together
+    """
 
     def __init__(self, entity: LinkedEntity, other_entity: Entity, forward: bool) -> None:
         super().__init__(entity.address +
@@ -112,23 +170,41 @@ class LinkError(RuntimeError):
 
 @dataclass(frozen=True)
 class ProjectPublication:
+    """
+    Information about a journal article, book, web page, or other external available documentation for a project.
+    """
+
     title: str
     url: Optional[str]
 
     @classmethod
     def from_json(cls, json: JSON) -> 'ProjectPublication':
+        """
+        ProjectPublication class constructor
+
+        :param json: JSON dict
+        """
+
         title = lookup(json, 'title', 'publication_title')
         url = lookup(json, 'url', 'publication_url', default=None)
         return cls(title=title, url=url)
 
     @property
     def publication_title(self):
+        """
+        Deprecated property, replaced by `title`
+        """
+
         warnings.warn(f"ProjectPublication.publication_title is deprecated. "
                       f"Use ProjectPublication.title instead.", DeprecationWarning)
         return self.title
 
     @property
     def publication_url(self):
+        """
+        Deprecated property, replaced by `url`
+        """
+
         warnings.warn(f"ProjectPublication.publication_url is deprecated. "
                       f"Use ProjectPublication.url instead.", DeprecationWarning)
         return self.url
@@ -136,6 +212,9 @@ class ProjectPublication:
 
 @dataclass(frozen=True)
 class ProjectContact:
+    """
+    Information about an individual who submitted or contributed to a project.
+    """
     name: str
     email: Optional[str]
     institution: Optional[str]  # optional up to project/5.3.0/contact
@@ -145,6 +224,12 @@ class ProjectContact:
 
     @classmethod
     def from_json(cls, json: JSON) -> 'ProjectContact':
+        """
+        ProjectContact class constructor
+
+        :param json: JSON dict
+        """
+
         project_role = json.get('project_role')
         project_role = ontology_label(project_role) if isinstance(project_role, dict) else project_role
         return cls(name=lookup(json, 'name', 'contact_name'),
@@ -156,6 +241,10 @@ class ProjectContact:
 
     @property
     def contact_name(self) -> str:
+        """
+        Deprecated property, replaced by `name`
+        """
+
         warnings.warn(f"ProjectContact.contact_name is deprecated. "
                       f"Use ProjectContact.name instead.", DeprecationWarning)
         return self.name
@@ -163,6 +252,9 @@ class ProjectContact:
 
 @dataclass(init=False)
 class Project(Entity):
+    """
+    A project entity contains information about the overall project
+    """
     project_short_name: str
     project_title: str
     project_description: Optional[str]  # optional up to core/project/5.2.2/project_core
@@ -175,6 +267,12 @@ class Project(Entity):
     supplementary_links: Set[str]
 
     def __init__(self, json: JSON) -> None:
+        """
+        Project class constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         content = json.get('content', json)
         core = content['project_core']
@@ -192,12 +290,20 @@ class Project(Entity):
 
     @property
     def laboratory_names(self) -> set:
+        """
+        Deprecated property, replaced by `laboratory`
+        """
+
         warnings.warn("Project.laboratory_names is deprecated. "
                       "Use contributors.laboratory instead.", DeprecationWarning)
         return {contributor.laboratory for contributor in self.contributors if contributor.laboratory}
 
     @property
     def project_shortname(self) -> str:
+        """
+        Deprecated property, replaced by `project_short_name`
+        """
+
         warnings.warn("Project.project_shortname is deprecated. "
                       "Use project_short_name instead.", DeprecationWarning)
         return self.project_short_name
@@ -205,6 +311,10 @@ class Project(Entity):
 
 @dataclass(init=False)
 class Biomaterial(LinkedEntity):
+    """
+    Information about the biomaterial, base class of entities like DonorOrganism or Organoid
+    """
+
     biomaterial_id: str
     ncbi_taxon_id: List[int]
     has_input_biomaterial: Optional[str]
@@ -212,6 +322,12 @@ class Biomaterial(LinkedEntity):
     to_processes: MutableMapping[UUID4, 'Process']
 
     def __init__(self, json: JSON) -> None:
+        """
+        Biomaterial class constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         content = json.get('content', json)
         self.biomaterial_id = content['biomaterial_core']['biomaterial_id']
@@ -221,6 +337,13 @@ class Biomaterial(LinkedEntity):
         self.to_processes = {}
 
     def _connect_to(self, other: Entity, forward: bool) -> None:
+        """
+        Link this Biomaterial to another Entity as input into or output from a sequencing process
+
+        :param other: Entity to connect with
+        :param forward: True if input into other, False if output from other
+        """
+
         if isinstance(other, Process):
             if forward:
                 self.to_processes[other.document_id] = other
@@ -232,6 +355,10 @@ class Biomaterial(LinkedEntity):
 
 @dataclass(init=False)
 class DonorOrganism(Biomaterial):
+    """
+    Information about the donor from which a specimen was collected.
+    """
+
     genus_species: Set[str]
     diseases: Set[str]
     organism_age: str
@@ -239,6 +366,12 @@ class DonorOrganism(Biomaterial):
     sex: str
 
     def __init__(self, json: JSON):
+        """
+        DonorOrganism class constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         content = json.get('content', json)
         self.genus_species = {ontology_label(gs) for gs in content['genus_species']}
@@ -256,12 +389,20 @@ class DonorOrganism(Biomaterial):
 
     @property
     def biological_sex(self):
+        """
+        Deprecated property, replaced by `sex`
+        """
+
         warnings.warn(f"DonorOrganism.biological_sex is deprecated. "
                       f"Use DonorOrganism.sex instead.", DeprecationWarning)
         return self.sex
 
     @property
     def disease(self):
+        """
+        Deprecated property, replaced by `diseases`
+        """
+
         warnings.warn(f"DonorOrganism.disease is deprecated. "
                       f"Use DonorOrganism.diseases instead.", DeprecationWarning)
         return self.diseases
@@ -269,6 +410,10 @@ class DonorOrganism(Biomaterial):
 
 @dataclass(init=False)
 class SpecimenFromOrganism(Biomaterial):
+    """
+    Information about the specimen that was collected from the donor organism.
+    """
+
     storage_method: Optional[str]
     preservation_method: Optional[str]
     diseases: Set[str]
@@ -276,6 +421,12 @@ class SpecimenFromOrganism(Biomaterial):
     organ_parts: Set[str]
 
     def __init__(self, json: JSON):
+        """
+        SpecimenFromOrganism class constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         content = json.get('content', json)
         preservation_storage = content.get('preservation_storage')
@@ -291,12 +442,20 @@ class SpecimenFromOrganism(Biomaterial):
 
     @property
     def disease(self):
+        """
+        Deprecated property, replaced by `diseases`
+        """
+
         warnings.warn(f"SpecimenFromOrganism.disease is deprecated. "
                       f"Use SpecimenFromOrganism.diseases instead.", DeprecationWarning)
         return self.diseases
 
     @property
     def organ_part(self):
+        """
+        Deprecated property, replaced by `organ_parts`
+        """
+
         msg = ("SpecimenFromOrganism.organ_part has been removed. "
                "Use SpecimenFromOrganism.organ_parts instead.")
         warnings.warn(msg, DeprecationWarning)
@@ -305,19 +464,38 @@ class SpecimenFromOrganism(Biomaterial):
 
 @dataclass(init=False)
 class ImagedSpecimen(Biomaterial):
+    """
+    Information about a tissue specimen after it has been sectioned and prepared for imaging.
+    """
+
     slice_thickness: Union[float, int]
 
     def __init__(self, json: JSON) -> None:
+        """
+        ImagedSpecimen class constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         self.slice_thickness = json['slice_thickness']
 
 
 @dataclass(init=False)
 class CellSuspension(Biomaterial):
+    """
+    Information about the suspension of cells or nuclei derived from the collected or cultured specimen.
+    """
     estimated_cell_count: Optional[int]
     selected_cell_types: Set[str]
 
     def __init__(self, json: JSON) -> None:
+        """
+        CellSuspension class constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         content = json.get('content', json)
         self.estimated_cell_count = lookup(content, 'estimated_cell_count', 'total_estimated_cells', default=None)
@@ -339,10 +517,19 @@ class CellSuspension(Biomaterial):
 
 @dataclass(init=False)
 class CellLine(Biomaterial):
+    """
+    Information about the cell line or cell culture biomaterial.
+    """
     type: str
     model_organ: Optional[str]
 
     def __init__(self, json: JSON) -> None:
+        """
+        CellLine class constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         content = json.get('content', json)
         self.type = lookup(content, 'type', 'cell_line_type')
@@ -357,10 +544,19 @@ class CellLine(Biomaterial):
 
 @dataclass(init=False)
 class Organoid(Biomaterial):
+    """
+    Information about an organoid biomaterial.
+    """
     model_organ: str
     model_organ_part: Optional[str]
 
     def __init__(self, json: JSON) -> None:
+        """
+        Organoid class constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         content = json.get('content', json)
         self.model_organ = ontology_label(lookup(content, 'model_organ', 'model_for_organ'), default=None)
@@ -369,6 +565,9 @@ class Organoid(Biomaterial):
 
 @dataclass(init=False)
 class Process(LinkedEntity):
+    """
+    Information about a process completed in the experiment.
+    """
     process_id: str
     process_name: Optional[str]
     input_biomaterials: MutableMapping[UUID4, Biomaterial] = field(repr=False)
@@ -378,6 +577,12 @@ class Process(LinkedEntity):
     protocols: MutableMapping[UUID4, 'Protocol']
 
     def __init__(self, json: JSON) -> None:
+        """
+        Process class constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         content = json.get('content', json)
         process_core = content['process_core']
@@ -390,6 +595,13 @@ class Process(LinkedEntity):
         self.protocols = {}
 
     def _connect_to(self, other: Entity, forward: bool) -> None:
+        """
+        Link this Process to another Entity object
+
+        :param other: Entity to connect with
+        :param forward: True if input into other, False if output from other
+        """
+
         if isinstance(other, Biomaterial):
             biomaterials = self.output_biomaterials if forward else self.input_biomaterials
             biomaterials[other.document_id] = other
@@ -460,16 +672,32 @@ class ImagingTarget:
 
     @classmethod
     def from_json(cls, json: JSON) -> 'ImagingTarget':
+        """
+        ImagingTarget class constructor
+
+        :param json: JSON dict
+        """
+
         assay_type = ontology_label(json['assay_type'])
         return cls(assay_type=assay_type)
 
 
 @dataclass(init=False)
 class Protocol(LinkedEntity):
+    """
+    Information about the protocol.
+    """
+
     protocol_id: str
     protocol_name: Optional[str]
 
     def __init__(self, json: JSON) -> None:
+        """
+        Protocol class constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         content = json.get('content', json)
         protocol_core = content['protocol_core']
@@ -477,6 +705,13 @@ class Protocol(LinkedEntity):
         self.protocol_name = protocol_core.get('protocol_name')
 
     def _connect_to(self, other: Entity, forward: bool) -> None:
+        """
+        Link this Protocol to another Entity
+
+        :param other: Entity to connect with
+        :param forward: True if input into other, False if output from other
+        """
+
         if isinstance(other, Process) and not forward:
             pass  # no explicit, typed back reference
         else:
@@ -485,9 +720,19 @@ class Protocol(LinkedEntity):
 
 @dataclass(init=False)
 class LibraryPreparationProtocol(Protocol):
+    """
+    Information about how a sequencing library was prepared.
+    """
+
     library_construction_method: str
 
     def __init__(self, json: JSON) -> None:
+        """
+        LibraryPreparationProtocol class constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         content = json.get('content', json)
         temp = lookup(content, 'library_construction_method', 'library_construction_approach')
@@ -502,10 +747,20 @@ class LibraryPreparationProtocol(Protocol):
 
 @dataclass(init=False)
 class SequencingProtocol(Protocol):
+    """
+    Information about the sequencing protocol.
+    """
+
     instrument_manufacturer_model: str
     paired_end: Optional[bool]
 
     def __init__(self, json: JSON):
+        """
+        SequencingProtocol class constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         content = json.get('content', json)
         self.instrument_manufacturer_model = ontology_label(content.get('instrument_manufacturer_model'), default=None)
@@ -552,9 +807,16 @@ class ImagingProtocol(Protocol):
     target: List[ImagingTarget]  # A list so all the ImagingTarget objects can be tallied when indexed
 
     def __init__(self, json: JSON):
+        """
+        ImagingProtocol class constructor
+
+        :param json: JSON dict
+        """
+
         super().__init__(json)
         content = json.get('content', json)
         self.target = [ImagingTarget.from_json(target) for target in content['target']]
+
 
 @dataclass(init=False)
 class ImagingPreparationProtocol(Protocol):
@@ -577,6 +839,12 @@ class ManifestEntry:
 
     @classmethod
     def from_json(cls, json: JSON):
+        """
+        ManifestEntry class constructor
+
+        :param json: JSON dict
+        """
+
         kwargs = dict(json)
         kwargs['content_type'] = kwargs.pop('content-type')
         kwargs['uuid'] = UUID4(json['uuid'])
@@ -593,6 +861,13 @@ class File(LinkedEntity):
     content_description: Set[str]
 
     def __init__(self, json: JSON, manifest: Mapping[str, ManifestEntry]):
+        """
+        File class constructor
+
+        :param json: JSON dict
+        :param manifest: dict
+        """
+
         super().__init__(json)
         content = json.get('content', json)
         core = content['file_core']
@@ -603,6 +878,13 @@ class File(LinkedEntity):
         self.to_processes = {}
 
     def _connect_to(self, other: Entity, forward: bool) -> None:
+        """
+        Link this File to another Entity as input into or output from a sequencing process
+
+        :param other: Entity to connect with
+        :param forward: True if input into other, False if output from other
+        """
+
         if isinstance(other, Process):
             if forward:
                 self.to_processes[other.document_id] = other
@@ -624,6 +906,13 @@ class SequenceFile(File):
     lane_index: Optional[str]
 
     def __init__(self, json: JSON, manifest: Mapping[str, ManifestEntry]):
+        """
+        SequenceFile class constructor
+
+        :param json: JSON dict
+        :param manifest: dict
+        """
+
         super().__init__(json, manifest)
         content = json.get('content', json)
         self.read_index = content['read_index']
@@ -659,6 +948,12 @@ class Link:
 
     @classmethod
     def from_json(cls, json: JSON) -> Iterable['Link']:
+        """
+        Link class constructor
+
+        :param json: JSON dict
+        """
+
         if 'source_id' in json:
             # v5
             yield cls(source_id=UUID4(json['source_id']),
@@ -700,6 +995,15 @@ class Bundle:
     links: List[Link]
 
     def __init__(self, uuid: str, version: str, manifest: List[JSON], metadata_files: Mapping[str, JSON]):
+        """
+        Bundle class constructor
+
+        :param uuid: The UUID of the bundle
+        :param version: The version of the bundle
+        :param manifest: A list of the manifest entries for all files in the bundle (data and metadata)
+        :param metadata_files: A dictionary mapping the file name of each metadata file to the file's JSON contents
+        """
+
         self.uuid = UUID4(uuid)
         self.version = version
         self.manifest = {m.name: m for m in map(ManifestEntry.from_json, manifest)}
@@ -763,6 +1067,10 @@ class Bundle:
             destination_entity.connect_to(source_entity, forward=False)
 
     def root_entities(self) -> Mapping[UUID4, LinkedEntity]:
+        """
+        Return a list of the bundle's root entities
+        """
+
         roots = {}
 
         class RootFinder(EntityVisitor):
@@ -779,20 +1087,32 @@ class Bundle:
 
     @property
     def specimens(self) -> List[SpecimenFromOrganism]:
+        """
+        A list consisting of the bundle's SpecimenFromOrganism instances
+        """
+
         return [s for s in self.biomaterials.values() if isinstance(s, SpecimenFromOrganism)]
 
     @property
     def sequencing_input(self) -> List[Biomaterial]:
+        """
+        A list consisting of the bundle's Biomaterial instances that are inputs into a sequencing process
+        """
+
         return [bm for bm in self.biomaterials.values()
                 if any(ps.is_sequencing_process() for ps in bm.to_processes.values())]
 
     @property
     def sequencing_output(self) -> List[SequenceFile]:
+        """
+        A list consisting of the bundle's SequenceFile instances that are outputs from a sequencing process
+        """
+
         return [f for f in self.files.values()
                 if isinstance(f, SequenceFile)
                 and any(ps.is_sequencing_process() for ps in f.from_processes.values())]
 
-
+# Mapping schema names to entity types
 entity_types = {
     # Biomaterials
     'donor_organism': DonorOrganism,
@@ -834,6 +1154,7 @@ entity_types = {
     'sequencing_process': SequencingProcess
 }
 
+# Mapping entity types to schema names
 schema_names = {
     v: k for k, v in entity_types.items()
 }
