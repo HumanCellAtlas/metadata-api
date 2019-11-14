@@ -2,6 +2,9 @@ language: python
 
 cache: pip
 
+services:
+  - docker
+
 python:
   - 3.6
 
@@ -9,6 +12,14 @@ install:
   - make travis_install
 
 script:
+  # Hack: The use of chrgp compensates for a quirk of Docker. The PyCharm image
+  # used by make format sets up a user called `developer` and assigns it UID
+  # 1000. Travis is running as UID 2000. An alternative would be to pass --user
+  # to `docker run` and bind-mount an /etc/passwd that maps that to `developer`.
+  # Currently I'm unclear why `make format` works unchanged on Docker
+  - sudo chgrp -R 1000 . && make format && sudo chgrp -R $(id -g) .
+  - make check_clean
+  - make pep8
   - make test
 
 after_success:
