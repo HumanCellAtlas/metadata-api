@@ -1,3 +1,5 @@
+## Moved to https://github.com/DataBiosphere/hca-metadata-api
+
 [![Build Status](https://travis-ci.org/HumanCellAtlas/metadata-api.svg?branch=develop)](https://travis-ci.org/HumanCellAtlas/metadata-api)
 [![Coverage Status](https://coveralls.io/repos/github/HumanCellAtlas/metadata-api/badge.svg?branch=develop)](https://coveralls.io/github/HumanCellAtlas/metadata-api?branch=develop)
 
